@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exportar Alertas New Relic</title>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    button, input { padding: 10px; font-size: 16px; }
+    #status { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Exportar Alertas New Relic a Excel</h1>
+
+  <label for="policyId">Policy ID:</label>
+  <input type="text" id="policyId" placeholder="Ingrese Policy ID">
+  <button id="exportBtn">Exportar alertas</button>
+
+  <div id="status"></div>
+
+  <script>
+    async function fetchAllAlerts(policyId) {
+      const response = await fetch("http://localhost:3000/alerts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ policyId })
+      });
+
+      if (!response.ok) throw new Error("Error al obtener alertas del servidor");
+      return await response.json();
+    }
+
+    function exportToExcel(conditions) {
+      const rows = conditions.map(c => ({
+        ID: c.id,
+        Nombre: c.name,
+        Descripción: c.description || "",
+        Habilitada: c.enabled ? "Sí" : "No",
+        Tipo: c.type,
+        Runbook: c.runbookUrl || "No",
+        NRQL: c.nrql?.query || "",
+        Umbral: c.terms?.[0]?.threshold || "",
+        Operador: c.terms?.[0]?.operator || "",
+        Prioridad: c.terms?.[0]?.priority || "",
+        DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
+        Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
+      }));
+
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
+      XLSX.writeFile(workbook, "alerts.xlsx");
+
+      return rows.length;
+    }
+
+    document.getElementById("exportBtn").addEventListener("click", async () => {
+      const status = document.getElementById("status");
+      const policyId = document.getElementById("policyId").value.trim();
+
+      if (!policyId) {
+        status.textContent = "❌ Debes ingresar una Policy ID";
+        return;
+      }
+
+      status.textContent = "⏳ Obteniendo alertas...";
+      try {
+        const alerts = await fetchAllAlerts(policyId);
+        const count = exportToExcel(alerts);
+        status.textContent = `✅ Exportadas ${count} alertas a alerts.xlsx`;
+      } catch (err) {
+        console.error(err);
+        status.textContent = "❌ Error al exportar alertas. Revisa la consola.";
+      }
+    });
+  </script>
+</body>
+</html>
