@@ -21,8 +21,13 @@
   <div id="status"></div>
 
   <script>
+    // Detecta entorno y ajusta la URL del backend
+    const BASE_URL = window.location.hostname.includes("localhost")
+      ? "http://localhost:3000"
+      : "https://new-relic.onrender.com"; // reemplaza con tu URL de Render
+
     async function fetchAllAlerts(policyId) {
-      const response = await fetch("http://localhost:3000/alerts", {
+      const response = await fetch(`${BASE_URL}/alerts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ policyId })
