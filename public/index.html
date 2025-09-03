@@ -27,39 +27,11 @@
       background-color: var(--color-dark-1);
       color: var(--color-secondary);
       position: relative;
-
       overflow: hidden;
-      background-image: radial-gradient(rgba(46, 160, 67, 0.15) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(46, 160, 67, 0.15) 2px, transparent 1px);
       background-size: 40px 40px;
     }
 
-    /* Fondo animado sutil */
-    body::before {
-      content: "";
-      position: absolute;
-      inset: -50%;
-      background: rgba(46, 160, 67, 0.05);
-      border-radius: 50%;
-      z-index: 0;
-      animation: pulse 15s infinite ease-in-out;
-    }
-
-    @keyframes pulse {
-      0% {
-        transform: scale(0.5);
-        opacity: 0.1;
-      }
-
-      50% {
-        transform: scale(1.5);
-        opacity: 0.2;
-      }
-
-      100% {
-        transform: scale(0.5);
-        opacity: 0.1;
-      }
-    }
 
     .container {
       text-align: center;
@@ -318,29 +290,31 @@
     }
 
     function exportToExcel(conditions) {
-      const rows = conditions.map(c => ({
-        ID: c.id,
-        Nombre: c.name,
-        Descripción: c.description || "",
-        Habilitada: c.enabled ? "Sí" : "No",
-        Tipo: c.type,
-        Runbook: c.runbookUrl || "No",
-        NRQL: c.nrql?.query || "",
-        Umbral: c.terms?.[0]?.threshold || "",
-        Operador: c.terms?.[0]?.operator || "",
-        Prioridad: c.terms?.[0]?.priority || "",
-        DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
-        Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
-      }));
+    const rows = conditions.map(c => ({
+      ID: c.id,
+      Nombre: c.name,
+      Descripción: c.description || "",
+      Habilitada: c.enabled ? "Sí" : "No",
+      Tipo: c.type,
+      Runbook: c.runbookUrl || "No",
+      NRQL: c.nrql?.query || "",
+      Umbral: c.terms?.[0]?.threshold || "",
+      Operador: c.terms?.[0]?.operator || "",
+      Prioridad: c.terms?.[0]?.priority || "",
+      DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
+      Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
+      GuidEntidad: c.realEntity?.guid || "",
+      NombreEntidad: c.realEntity?.name || "",
+      TipoEntidad: c.realEntity?.type || ""
+    }));
 
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.json_to_sheet(rows);
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
-      XLSX.writeFile(workbook, "alerts.xlsx");
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
+    XLSX.writeFile(workbook, "alerts.xlsx");
 
-      return rows.length;
-    }
-
+    return rows.length;
+  }
     document.getElementById("exportBtn").addEventListener("click", async () => {
       const status = document.getElementById("status");
       const policyId = document.getElementById("policyId").value.trim();
@@ -388,64 +362,32 @@
   <script>
   const alertCountEl = document.getElementById("alertCount");
 
-  document.getElementById("exportBtn").addEventListener("click", async () => {
-    const status = document.getElementById("status");
-    const policyId = document.getElementById("policyId").value.trim();
+ function exportAllToExcel(conditions) {
+    const rows = conditions.map(c => ({
+      ID: c.id,
+      Nombre: c.name,
+      Descripción: c.description || "",
+      Habilitada: c.enabled ? "Sí" : "No",
+      Tipo: c.type,
+      Runbook: c.runbookUrl || "No",
+      NRQL: c.nrql?.query || "",
+      Umbral: c.terms?.[0]?.threshold || "",
+      Operador: c.terms?.[0]?.operator || "",
+      Prioridad: c.terms?.[0]?.priority || "",
+      DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
+      Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
+      GuidEntidad: c.realEntity?.guid || "",
+      NombreEntidad: c.realEntity?.name || "",
+      TipoEntidad: c.realEntity?.type || ""
+    }));
 
-    if (!policyId) {
-      status.textContent = "❌ Debes ingresar una Policy ID";
-      return;
-    }
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
+    XLSX.writeFile(workbook, "all_alerts.xlsx");
 
-    status.textContent = "⏳ Obteniendo alertas...";
-    try {
-      const alerts = await fetchAllAlerts(policyId);
-
-      if (alerts.length === 0) {
-        status.textContent = "⚠️ No existen alertas asociadas a esta Policy ID";
-        alertCountEl.textContent = "Alertas configuradas: 0";
-        return;
-      }
-
-      const count = exportToExcel(alerts);
-      status.textContent = `✅ Exportadas ${count} alertas a alerts.xlsx`;
-
-      // ✅ Mostrar total de alertas configuradas
-      alertCountEl.textContent = `Total de alertas configuradas: ${alerts.length}`;
-      showTab('tab-example'); // cambia automáticamente a la pestaña "Alertas Configuradas"
-
-    } catch (err) {
-      console.error(err);
-      status.textContent = "❌ Error al exportar alertas. Revisa la consola.";
-      alertCountEl.textContent = "";
-    }
-  });
-
-
-  function exportAllToExcel(conditions) {
-  const rows = conditions.map(c => ({
-    ID: c.id,
-    Nombre: c.name,
-    Descripción: c.description || "",
-    Habilitada: c.enabled ? "Sí" : "No",
-    Tipo: c.type,
-    Runbook: c.runbookUrl || "No",
-    NRQL: c.nrql?.query || "",
-    Umbral: c.terms?.[0]?.threshold || "",
-    Operador: c.terms?.[0]?.operator || "",
-    Prioridad: c.terms?.[0]?.priority || "",
-    DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
-    Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
-  }));
-
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
-  XLSX.writeFile(workbook, "all_alerts.xlsx");
-
-  return rows.length;
-}
-
+    return rows.length;
+  }
 
 document.getElementById("exportAllBtn").addEventListener("click", async () => {
   const statusAll = document.getElementById("statusAll");
@@ -461,17 +403,15 @@ document.getElementById("exportAllBtn").addEventListener("click", async () => {
 
     const allAlerts = await response.json();
     if (allAlerts.length === 0) {
+
+      
       statusAll.textContent = "⚠️ No hay alertas configuradas";
       return;
     }
 
     const count = exportAllToExcel(allAlerts);
 
-
-
     statusAll.innerHTML = `<pre><code>// <span style="color:#ffdd57; font-weight:bold;">✅ Exportadas ${count} alertas a all_alerts.xlsx</span></code></pre>`;
-
-
   } catch (err) {
     console.error(err);
     statusAll.textContent = "❌ Error al exportar todas las alertas";
