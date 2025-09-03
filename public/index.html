@@ -1,30 +1,198 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exportar Alertas New Relic</title>
+  <title>Obserbavilidad</title>
+  <link rel="icon" type="image/png" href="assets/logo-title.png">
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    button, input { padding: 10px; font-size: 16px; }
-    #status { margin-top: 20px; }
+    /* Estilos basados en la página de Node.js */
+    :root {
+      --color-primary: #2ea043;
+      --color-secondary: #e6edf3;
+      --color-dark-1: #191e25;
+      --color-dark-2: #12161b;
+      --color-dark-3: #0d1117;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--color-dark-1);
+      color: var(--color-secondary);
+      position: relative;
+      overflow: hidden;
+      background-image: radial-gradient(rgba(46, 160, 67, 0.15) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Fondo animado sutil */
+    body::before {
+      content: "";
+      position: absolute;
+      inset: -50%;
+      background: rgba(46, 160, 67, 0.05);
+      border-radius: 50%;
+      z-index: 0;
+      animation: pulse 15s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.5);
+        opacity: 0.1;
+      }
+
+      50% {
+        transform: scale(1.5);
+        opacity: 0.2;
+      }
+
+      100% {
+        transform: scale(0.5);
+        opacity: 0.1;
+      }
+    }
+
+    .container {
+      text-align: center;
+      max-width: 600px;
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+    }
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  background: linear-gradient(90deg, #2ecc71, #27ae60); /* Verde neón a verde oscuro */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none; /* Minimalista */
+}
+
+
+
+    .card {
+      background-color: var(--color-dark-2);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      margin-top: 30px;
+      padding: 20px 25px;
+      text-align: left;
+    }
+
+    .card pre {
+      margin: 0;
+    }
+
+    .card code {
+      color: var(--color-secondary);
+      font-family: monospace;
+      font-size: 0.9em;
+      text-shadow: 0 0 5px rgba(46, 160, 67, 0.5);
+    }
+
+    input,
+    button {
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      margin: 15px 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease-in-out;
+    }
+
+    input {
+      width: 250px;
+      background-color: #161b22;
+      color: var(--color-secondary);
+      border: 1px solid #30363d;
+    }
+
+    /* 🔹 Flechas del input number al mismo color que el texto */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: inner-spin-button;
+      filter: invert(90%) sepia(10%) saturate(200%) hue-rotate(180deg);
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield; /* Para Firefox */
+    }
+
+    button {
+      background: linear-gradient(to right, #2e6438, #224b2b);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+button:hover {
+  background: linear-gradient(to right, #4dbd6b, #2f7a45); /* Hover un poco más claro */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
   </style>
 </head>
+
 <body>
-  <h1>Exportar Alertas New Relic a Excel</h1>
+  <div class="container">
+    <h1>Exportar Alertas New Relic</h1>
+<div class="card">
+  <pre><code>
+// <span style="color:#2ea043; font-weight:bold;">Cómo usar la aplicación:</span>
 
-  <label for="policyId">Policy ID:</label>
-  <input type="text" id="policyId" placeholder="Ingrese Policy ID">
-  <button id="exportBtn">Exportar alertas</button>
+<span style="color:#58a6ff;">1.</span> Escribe el <span style="color:#d2a8ff;">Policy ID</span> en el campo de texto.  
+   (Ejemplo: <span style="color:#ffa657;">1234567</span>)
 
-  <div id="status"></div>
+<span style="color:#58a6ff;">2.</span> Haz clic en 
+   "<span style="color:#2ea043; font-weight:bold;">Exportar alertas</span>".
 
+<span style="color:#58a6ff;">3.</span> La app consultará la 
+   <span style="color:#79c0ff;">API de New Relic</span> y, si existen alertas,  
+   descargará un archivo "<span style="color:#ff7b72;">alerts.xlsx</span>".
+
+<span style="color:#58a6ff;">4.</span> El archivo Excel contendrá:  
+   - <span style="color:#d2a8ff;">ID</span>, <span style="color:#d2a8ff;">Nombre</span> y <span style="color:#d2a8ff;">Descripción</span>  
+   - Estado (<span style="color:#2ea043;">habilitada</span> o no)  
+   - Tipo de condición  
+   - Runbook asociado  
+   - Consulta <span style="color:#d2a8ff;">NRQL</span>  
+   - Detalles de umbral, operador, prioridad,  
+     duración y ocurrencias
+
+<span style="color:#58a6ff;">5.</span> Si la <span style="color:#d2a8ff;">Policy ID</span> no tiene alertas asociadas,  
+   se mostrará un <span style="color:#ff7b72;">aviso en pantalla</span>  
+   y no se descargará ningún archivo.
+  </code></pre>
+</div>
+
+
+    <input type="number" id="policyId" placeholder="Ingrese Policy ID">
+    <button id="exportBtn">Exportar alertas</button>
+
+    <div id="status"></div>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script>
-    // Detecta entorno y ajusta la URL del backend
     const BASE_URL = window.location.hostname.includes("localhost")
       ? "http://localhost:3000"
-      : "https://new-relic.onrender.com"; // reemplaza con tu URL de Render
+      : "https://new-relic.onrender.com";
 
     async function fetchAllAlerts(policyId) {
       const response = await fetch(`${BASE_URL}/alerts`, {
@@ -61,25 +229,33 @@
       return rows.length;
     }
 
-    document.getElementById("exportBtn").addEventListener("click", async () => {
-      const status = document.getElementById("status");
-      const policyId = document.getElementById("policyId").value.trim();
+document.getElementById("exportBtn").addEventListener("click", async () => {
+  const status = document.getElementById("status");
+  const policyId = document.getElementById("policyId").value.trim();
 
-      if (!policyId) {
-        status.textContent = "❌ Debes ingresar una Policy ID";
-        return;
-      }
+  if (!policyId) {
+    status.textContent = "❌ Debes ingresar una Policy ID";
+    return;
+  }
 
-      status.textContent = "⏳ Obteniendo alertas...";
-      try {
-        const alerts = await fetchAllAlerts(policyId);
-        const count = exportToExcel(alerts);
-        status.textContent = `✅ Exportadas ${count} alertas a alerts.xlsx`;
-      } catch (err) {
-        console.error(err);
-        status.textContent = "❌ Error al exportar alertas. Revisa la consola.";
-      }
-    });
+  status.textContent = "⏳ Obteniendo alertas...";
+  try {
+    const alerts = await fetchAllAlerts(policyId);
+
+    if (alerts.length === 0) {
+      status.textContent = "⚠️ No existen alertas asociadas a esta Policy ID";
+      return; // 👈 evita que se descargue el Excel
+    }
+
+    const count = exportToExcel(alerts);
+    status.textContent = `✅ Exportadas ${count} alertas a alerts.xlsx`;
+  } catch (err) {
+    console.error(err);
+    status.textContent = "❌ Error al exportar alertas. Revisa la consola.";
+  }
+});
+
   </script>
 </body>
+
 </html>
