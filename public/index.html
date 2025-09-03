@@ -153,6 +153,64 @@
     .tab-content.active {
       display: block;
     }
+
+
+  /* Overlay que bloquea la pantalla */
+  #loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(13, 17, 23, 0.9); /* Fondo oscuro */
+    display: none; /* Oculto por defecto */
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; /* Spinner arriba, texto abajo */
+    z-index: 9999;
+  }
+
+  /* Spinner más pequeño */
+  .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top: 4px solid #2ea043;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 15px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Texto debajo del spinner */
+  #loadingText {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    font-family: Arial, sans-serif;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Puntitos animados suaves */
+  .dot {
+    animation: blink 1.5s infinite;
+    opacity: 0;
+  }
+
+  .dot:nth-child(1) { animation-delay: 0s; }
+  .dot:nth-child(2) { animation-delay: 0.3s; }
+  .dot:nth-child(3) { animation-delay: 0.6s; }
+
+  @keyframes blink {
+    0%, 20% { opacity: 0; }
+    30%, 80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
   </style>
 </head>
 
@@ -168,10 +226,11 @@
 
       <div id="tab-use" class="tab-content active">
 
-          <p style="color:#79c0ff; font-size:1rem; margin-bottom:15px;">
-    Ingresa un <strong>Policy ID</strong> para obtener información detallada de las alertas asociadas a esa política. Podrás exportarlas directamente a un archivo Excel.
-  </p>
-    <pre><code>
+        <p style="color:#79c0ff; font-size:1rem; margin-bottom:15px;">
+          Ingresa un <strong>Policy ID</strong> para obtener información detallada de las alertas asociadas a esa
+          política. Podrás exportarlas directamente a un archivo Excel.
+        </p>
+        <pre><code>
   // <span style="color:#2ea043; font-weight:bold;">Cómo usar la aplicación:</span>
 
   <span style="color:#58a6ff;">1.</span> Escribe el <span style="color:#d2a8ff;">Policy ID</span> en el campo de texto.  
@@ -198,14 +257,14 @@
      y no se descargará ningún archivo.
     </code></pre>
 
-    <input type="number" id="policyId" placeholder="Ingrese Policy ID">
-    <button id="exportBtn">Exportar alertas</button>
-    <div id="status"></div>
+        <input type="number" id="policyId" placeholder="Ingrese Policy ID">
+        <button id="exportBtn">Exportar alertas</button>
+        <div id="status"></div>
       </div>
 
 
-<div id="tab-example" class="tab-content">
-  <pre><code>
+      <div id="tab-example" class="tab-content">
+        <pre><code>
   // <span style="color:#2ea043; font-weight:bold;">Resumen de alertas configuradas:</span>
 
   Este panel permite exportar todas las alertas existentes en el sistema
@@ -223,55 +282,55 @@
   Si no hay alertas configuradas, se mostrará un aviso en pantalla.
   </code></pre>
 
-  <button id="exportAllBtn">Exportar todas las alertas</button>
-  <div id="statusAll"></div>
-</div>
+        <button id="exportAllBtn">Exportar todas las alertas</button>
+        <div id="statusAll"></div>
+      </div>
 
 
 
 
     </div>
-    
 
-  <!-- Los inputs y el botón ahora están dentro de la pestaña Policy -->
+
+    <!-- Los inputs y el botón ahora están dentro de la pestaña Policy -->
   </div>
 
-  
+
 
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script>
-      
-    const BASE_URL = window.location.hostname.includes("localhost") ?
-      "http://localhost:3000" :
-      "https://new-relic.onrender.com";
 
-      //     const BASE_URL = 
-      // "http://localhost:3000" 
+    // const BASE_URL = window.location.hostname.includes("localhost") ?
+    //   "http://localhost:3000" :
+    //   "https://new-relic.onrender.com";
 
-  // --- Contar alertas configuradas ---
-  const countAlertsBtn = document.getElementById("countAlertsBtn");
-  const alertsCountPanel = document.getElementById("alertsCountPanel");
+    const BASE_URL =
+      "http://localhost:3000"
 
-  if (countAlertsBtn) {
-    countAlertsBtn.addEventListener("click", async () => {
-      alertsCountPanel.textContent = "⏳ Contando alertas...";
-      try {
-        const response = await fetch(`${BASE_URL}/alerts-all`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
-        if (!response.ok) throw new Error("Error al obtener todas las alertas");
-        const allAlerts = await response.json();
-    alertsCountPanel.innerHTML = `<pre><code>// <span style="color:#ffdd57; font-weight:bold;">Total de alertas configuradas:</span> ${allAlerts.length}</code></pre>`;
+    // --- Contar alertas configuradas ---
+    const countAlertsBtn = document.getElementById("countAlertsBtn");
+    const alertsCountPanel = document.getElementById("alertsCountPanel");
 
-      } catch (err) {
-        console.error(err);
-        alertsCountPanel.textContent = "❌ Error al contar las alertas.";
-      }
-    });
-  }
+    if (countAlertsBtn) {
+      countAlertsBtn.addEventListener("click", async () => {
+        alertsCountPanel.textContent = "⏳ Contando alertas...";
+        try {
+          const response = await fetch(`${BASE_URL}/alerts-all`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json"
+            }
+          });
+          if (!response.ok) throw new Error("Error al obtener todas las alertas");
+          const allAlerts = await response.json();
+          alertsCountPanel.innerHTML = `<pre><code>// <span style="color:#ffdd57; font-weight:bold;">Total de alertas configuradas:</span> ${allAlerts.length}</code></pre>`;
+
+        } catch (err) {
+          console.error(err);
+          alertsCountPanel.textContent = "❌ Error al contar las alertas.";
+        }
+      });
+    }
 
 
     async function fetchAllAlerts(policyId) {
@@ -290,31 +349,31 @@
     }
 
     function exportToExcel(conditions) {
-    const rows = conditions.map(c => ({
-      ID: c.id,
-      Nombre: c.name,
-      Descripción: c.description || "",
-      Habilitada: c.enabled ? "Sí" : "No",
-      Tipo: c.type,
-      Runbook: c.runbookUrl || "No",
-      NRQL: c.nrql?.query || "",
-      Umbral: c.terms?.[0]?.threshold || "",
-      Operador: c.terms?.[0]?.operator || "",
-      Prioridad: c.terms?.[0]?.priority || "",
-      DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
-      Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
-      GuidEntidad: c.realEntity?.guid || "",
-      NombreEntidad: c.realEntity?.name || "",
-      TipoEntidad: c.realEntity?.type || ""
-    }));
+      const rows = conditions.map(c => ({
+        ID: c.id,
+        Nombre: c.name,
+        Descripción: c.description || "",
+        Habilitada: c.enabled ? "Sí" : "No",
+        Tipo: c.type,
+        Runbook: c.runbookUrl || "No",
+        NRQL: c.nrql?.query || "",
+        Umbral: c.terms?.[0]?.threshold || "",
+        Operador: c.terms?.[0]?.operator || "",
+        Prioridad: c.terms?.[0]?.priority || "",
+        DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
+        Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
+        GuidEntidad: c.realEntity?.guid || "",
+        NombreEntidad: c.realEntity?.name || "",
+        TipoEntidad: c.realEntity?.type || ""
+      }));
 
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
-    XLSX.writeFile(workbook, "alerts.xlsx");
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
+      XLSX.writeFile(workbook, "alerts.xlsx");
 
-    return rows.length;
-  }
+      return rows.length;
+    }
     document.getElementById("exportBtn").addEventListener("click", async () => {
       const status = document.getElementById("status");
       const policyId = document.getElementById("policyId").value.trim();
@@ -324,7 +383,8 @@
         return;
       }
 
-      status.textContent = "⏳ Obteniendo alertas...";
+      statusAll.textContent = "";
+      showLoading();
       try {
         const alerts = await fetchAllAlerts(policyId);
 
@@ -335,6 +395,7 @@
 
         const count = exportToExcel(alerts);
         status.textContent = `✅ Exportadas ${count} alertas a alerts.xlsx`;
+        hideLoading();
       } catch (err) {
         console.error(err);
         status.textContent = "❌ Error al exportar alertas. Revisa la consola.";
@@ -360,65 +421,110 @@
   </script>
 
   <script>
-  const alertCountEl = document.getElementById("alertCount");
+    const alertCountEl = document.getElementById("alertCount");
 
- function exportAllToExcel(conditions) {
-    const rows = conditions.map(c => ({
-      ID: c.id,
-      Nombre: c.name,
-      Descripción: c.description || "",
-      Habilitada: c.enabled ? "Sí" : "No",
-      Tipo: c.type,
-      Runbook: c.runbookUrl || "No",
-      NRQL: c.nrql?.query || "",
-      Umbral: c.terms?.[0]?.threshold || "",
-      Operador: c.terms?.[0]?.operator || "",
-      Prioridad: c.terms?.[0]?.priority || "",
-      DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
-      Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
-      GuidEntidad: c.realEntity?.guid || "",
-      NombreEntidad: c.realEntity?.name || "",
-      TipoEntidad: c.realEntity?.type || ""
-    }));
+    function exportAllToExcel(conditions) {
+      const rows = conditions.map(c => ({
+        ID: c.id,
+        Nombre: c.name,
+        Descripción: c.description || "",
+        Habilitada: c.enabled ? "Sí" : "No",
+        Tipo: c.type,
+        Runbook: c.runbookUrl || "No",
+        NRQL: c.nrql?.query || "",
+        Umbral: c.terms?.[0]?.threshold || "",
+        Operador: c.terms?.[0]?.operator || "",
+        Prioridad: c.terms?.[0]?.priority || "",
+        DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
+        Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
+        GuidEntidad: c.realEntity?.guid || "",
+        NombreEntidad: c.realEntity?.name || "",
+        TipoEntidad: c.realEntity?.type || ""
+      }));
 
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
-    XLSX.writeFile(workbook, "all_alerts.xlsx");
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
+      XLSX.writeFile(workbook, "all_alerts.xlsx");
 
-    return rows.length;
-  }
-
-document.getElementById("exportAllBtn").addEventListener("click", async () => {
-  const statusAll = document.getElementById("statusAll");
-  statusAll.textContent = "⏳ Obteniendo todas las alertas...";
-
-  try {
-    const response = await fetch(`${BASE_URL}/alerts-all`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" }
-    });
-
-    if (!response.ok) throw new Error("Error al obtener todas las alertas");
-
-    const allAlerts = await response.json();
-    if (allAlerts.length === 0) {
-
-      
-      statusAll.textContent = "⚠️ No hay alertas configuradas";
-      return;
+      return rows.length;
     }
 
-    const count = exportAllToExcel(allAlerts);
+    document.getElementById("exportAllBtn").addEventListener("click", async () => {
+      const statusAll = document.getElementById("statusAll");
+      statusAll.textContent = "⏳ Obteniendo todas las alertas...";
 
-    statusAll.innerHTML = `<pre><code>// <span style="color:#ffdd57; font-weight:bold;">✅ Exportadas ${count} alertas a all_alerts.xlsx</span></code></pre>`;
-  } catch (err) {
-    console.error(err);
-    statusAll.textContent = "❌ Error al exportar todas las alertas";
+      statusAll.textContent = "";
+      showLoading();
+
+      try {
+        const response = await fetch(`${BASE_URL}/alerts-all`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" }
+        });
+
+        if (!response.ok) throw new Error("Error al obtener todas las alertas");
+
+        const allAlerts = await response.json();
+        if (allAlerts.length === 0) {
+
+
+          statusAll.textContent = "⚠️ No hay alertas configuradas";
+          return;
+        }
+
+        const count = exportAllToExcel(allAlerts);
+
+        statusAll.innerHTML = `<pre><code>// <span style="color:#ffdd57; font-weight:bold;">✅ Exportadas ${count} alertas a all_alerts.xlsx</span></code></pre>`;
+        hideLoading();
+      } catch (err) {
+        console.error(err);
+        statusAll.textContent = "❌ Error al exportar todas las alertas";
+      }
+    });
+
+
+  const messages = [
+    "Extrayendo alertas",
+    "Espere un momento, por favor",
+    "Cargando información"
+  ];
+  let msgIndex = 0;
+  let messageInterval;
+
+function startMessageRotation() {
+  const loadingText = document.getElementById("loadingText");
+  if (!loadingText) return;
+  messageInterval = setInterval(() => {
+    msgIndex = (msgIndex + 1) % messages.length;
+    loadingText.childNodes[0].nodeValue = messages[msgIndex];
+  }, 5000); // Cambia cada 5 segundos
+}
+
+  function stopMessageRotation() {
+    clearInterval(messageInterval);
   }
-});
 
-</script>
+  function showLoading() {
+    const overlay = document.getElementById("loadingOverlay");
+    if (!overlay) return;
+    overlay.style.display = "flex";
+    startMessageRotation();
+  }
+
+  function hideLoading() {
+    const overlay = document.getElementById("loadingOverlay");
+    if (!overlay) return;
+    overlay.style.display = "none";
+    stopMessageRotation();
+  }
+
+  </script>
+
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div id="loadingText">Extrayendo alertas<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
+</div>
 </body>
 
 </html>
