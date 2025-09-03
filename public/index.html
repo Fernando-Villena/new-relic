@@ -27,30 +27,11 @@
       background-color: var(--color-dark-1);
       color: var(--color-secondary);
       position: relative;
-
-   overflow-y: auto;
+      
+      overflow: hidden;
       background-image: radial-gradient(rgba(46, 160, 67, 0.15) 1px, transparent 1px);
       background-size: 40px 40px;
     }
-
-    /* Para pantallas pequeñas (móviles) */
-@media (max-width: 600px) {
-  input,
-  button {
-    width: 100% !important; /* Ocupa todo el ancho del contenedor */
-    box-sizing: border-box;  /* Incluye padding dentro del ancho */
-    margin: 10px 0;          /* Espacio arriba y abajo */
-  }
-
-  .container {
-    padding: 15px;           /* Ajusta el padding para móviles */
-  }
-
-  h1 {
-    font-size: 2rem;         /* Ajusta el tamaño del título */
-  }
-}
-
 
     /* Fondo animado sutil */
     body::before {
