@@ -186,7 +186,8 @@
 
 <body>
   <div class="container">
-    <h1>Exportar Alertas New Relic</h1>
+    <h1>Herramienta de Alertas New Relic</h1>
+
     <div class="card">
       <div class="tab-menu">
         <span class="tab active" onclick="showTab('tab-use')">Policy</span>
@@ -226,10 +227,21 @@
     <div id="status"></div>
       </div>
 
-      <div id="tab-example" class="tab-content">
-  <button id="countAlertsBtn">Contar alertas configuradas</button>
+
+<div id="tab-example" class="tab-content">
+  <pre><code>
+  // <span style="color:#2ea043; font-weight:bold;">Resumen de alertas configuradas:</span>
+
+  Este panel permite ver un resumen del total de alertas existentes en el sistema. 
+  Puedes obtener un conteo rápido de todas las alertas configuradas haciendo clic en 
+  "<span style="color:#2ea043; font-weight:bold;">Contar total de alertas</span>".
+  </code></pre>
+
+  <button id="countAlertsBtn">Contar total de alertas </button>
   <div id="alertsCountPanel" style="margin-top:15px;font-weight:bold;"></div>
-      </div>
+</div>
+
+
     </div>
     
 
@@ -264,7 +276,8 @@
         });
         if (!response.ok) throw new Error("Error al obtener todas las alertas");
         const allAlerts = await response.json();
-        alertsCountPanel.textContent = `Total de alertas configuradas: ${allAlerts.length}`;
+    alertsCountPanel.innerHTML = `<pre><code>// <span style="color:#ffdd57; font-weight:bold;">Total de alertas configuradas:</span> ${allAlerts.length}</code></pre>`;
+
       } catch (err) {
         console.error(err);
         alertsCountPanel.textContent = "❌ Error al contar las alertas.";
