@@ -27,7 +27,7 @@
       background-color: var(--color-dark-1);
       color: var(--color-secondary);
       position: relative;
-      
+
       overflow: hidden;
       background-image: radial-gradient(rgba(46, 160, 67, 0.15) 1px, transparent 1px);
       background-size: 40px 40px;
@@ -69,16 +69,14 @@
       padding: 20px;
     }
 
-h1 {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
-  background: linear-gradient(90deg, #2ecc71, #27ae60); /* Verde neón a verde oscuro */
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none; /* Minimalista */
-}
-
-
+    h1 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      font-size: 2.5rem;
+      font-weight: normal;
+      margin-bottom: 20px;
+      color: white;
+      text-shadow: none;
+    }
 
     .card {
       background-color: var(--color-dark-2);
@@ -127,7 +125,8 @@ h1 {
     }
 
     input[type=number] {
-      -moz-appearance: textfield; /* Para Firefox */
+      -moz-appearance: textfield;
+      /* Para Firefox */
     }
 
     button {
@@ -137,15 +136,50 @@ h1 {
       font-weight: bold;
     }
 
-button:hover {
-  background: linear-gradient(to right, #4dbd6b, #2f7a45); /* Hover un poco más claro */
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-}
+    button:hover {
+      background: linear-gradient(to right, #4dbd6b, #2f7a45);
+      /* Hover un poco más claro */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    }
+
     #status {
       margin-top: 20px;
       font-weight: bold;
       transition: color 0.3s;
+    }
+
+    /* --- Estilos para el nuevo menú de pestañas --- */
+    .tab-menu {
+      display: flex;
+      justify-content: flex-start;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      color: #8b949e;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .tab:hover {
+      color: #e6edf3;
+    }
+
+    .tab.active {
+      color: #e6edf3;
+      border-bottom: 2px solid #2ea043;
+    }
+
+    .tab-content {
+      display: none;
+      padding-top: 20px;
+    }
+
+    .tab-content.active {
+      display: block;
     }
   </style>
 </head>
@@ -153,53 +187,98 @@ button:hover {
 <body>
   <div class="container">
     <h1>Exportar Alertas New Relic</h1>
-<div class="card">
-  <pre><code>
-// <span style="color:#2ea043; font-weight:bold;">Cómo usar la aplicación:</span>
+    <div class="card">
+      <div class="tab-menu">
+        <span class="tab active" onclick="showTab('tab-use')">Policy</span>
+        <span class="tab" onclick="showTab('tab-example')">Alertas Configuradas</span>
+      </div>
 
-<span style="color:#58a6ff;">1.</span> Escribe el <span style="color:#d2a8ff;">Policy ID</span> en el campo de texto.  
-   (Ejemplo: <span style="color:#ffa657;">1234567</span>)
+      <div id="tab-use" class="tab-content active">
+    <pre><code>
+  // <span style="color:#2ea043; font-weight:bold;">Cómo usar la aplicación:</span>
 
-<span style="color:#58a6ff;">2.</span> Haz clic en 
-   "<span style="color:#2ea043; font-weight:bold;">Exportar alertas</span>".
+  <span style="color:#58a6ff;">1.</span> Escribe el <span style="color:#d2a8ff;">Policy ID</span> en el campo de texto.  
+     (Ejemplo: <span style="color:#ffa657;">1234567</span>)
 
-<span style="color:#58a6ff;">3.</span> La app consultará la 
-   <span style="color:#79c0ff;">API de New Relic</span> y, si existen alertas,  
-   descargará un archivo "<span style="color:#ff7b72;">alerts.xlsx</span>".
+  <span style="color:#58a6ff;">2.</span> Haz clic en 
+     "<span style="color:#2ea043; font-weight:bold;">Exportar alertas</span>".
 
-<span style="color:#58a6ff;">4.</span> El archivo Excel contendrá:  
-   - <span style="color:#d2a8ff;">ID</span>, <span style="color:#d2a8ff;">Nombre</span> y <span style="color:#d2a8ff;">Descripción</span>  
-   - Estado (<span style="color:#2ea043;">habilitada</span> o no)  
-   - Tipo de condición  
-   - Runbook asociado  
-   - Consulta <span style="color:#d2a8ff;">NRQL</span>  
-   - Detalles de umbral, operador, prioridad,  
-     duración y ocurrencias
+  <span style="color:#58a6ff;">3.</span> La app consultará la 
+     <span style="color:#79c0ff;">API de New Relic</span> y, si existen alertas,  
+     descargará un archivo "<span style="color:#ff7b72;">alerts.xlsx</span>".
 
-<span style="color:#58a6ff;">5.</span> Si la <span style="color:#d2a8ff;">Policy ID</span> no tiene alertas asociadas,  
-   se mostrará un <span style="color:#ff7b72;">aviso en pantalla</span>  
-   y no se descargará ningún archivo.
-  </code></pre>
-</div>
+  <span style="color:#58a6ff;">4.</span> El archivo Excel contendrá:  
+     - <span style="color:#d2a8ff;">ID</span>, <span style="color:#d2a8ff;">Nombre</span> y <span style="color:#d2a8ff;">Descripción</span>  
+     - Estado (<span style="color:#2ea043;">habilitada</span> o no)  
+     - Tipo de condición  
+     - Runbook asociado  
+     - Consulta <span style="color:#d2a8ff;">NRQL</span>  
+     - Detalles de umbral, operador, prioridad,  
+       duración y ocurrencias
 
+  <span style="color:#58a6ff;">5.</span> Si la <span style="color:#d2a8ff;">Policy ID</span> no tiene alertas asociadas,  
+     se mostrará un <span style="color:#ff7b72;">aviso en pantalla</span>  
+     y no se descargará ningún archivo.
+    </code></pre>
 
     <input type="number" id="policyId" placeholder="Ingrese Policy ID">
     <button id="exportBtn">Exportar alertas</button>
-
     <div id="status"></div>
+      </div>
+
+      <div id="tab-example" class="tab-content">
+  <button id="countAlertsBtn">Contar alertas configuradas</button>
+  <div id="alertsCountPanel" style="margin-top:15px;font-weight:bold;"></div>
+      </div>
+    </div>
+    
+
+  <!-- Los inputs y el botón ahora están dentro de la pestaña Policy -->
   </div>
+
+  
 
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script>
-    const BASE_URL = window.location.hostname.includes("localhost")
-      ? "http://localhost:3000"
-      : "https://new-relic.onrender.com";
+      
+    const BASE_URL = 
+      "http://localhost:3000" 
+    
+
+  // --- Contar alertas configuradas ---
+  const countAlertsBtn = document.getElementById("countAlertsBtn");
+  const alertsCountPanel = document.getElementById("alertsCountPanel");
+
+  if (countAlertsBtn) {
+    countAlertsBtn.addEventListener("click", async () => {
+      alertsCountPanel.textContent = "⏳ Contando alertas...";
+      try {
+        const response = await fetch(`${BASE_URL}/alerts-all`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+        if (!response.ok) throw new Error("Error al obtener todas las alertas");
+        const allAlerts = await response.json();
+        alertsCountPanel.textContent = `Total de alertas configuradas: ${allAlerts.length}`;
+      } catch (err) {
+        console.error(err);
+        alertsCountPanel.textContent = "❌ Error al contar las alertas.";
+      }
+    });
+  }
+
 
     async function fetchAllAlerts(policyId) {
       const response = await fetch(`${BASE_URL}/alerts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ policyId })
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          policyId
+        })
       });
 
       if (!response.ok) throw new Error("Error al obtener alertas del servidor");
@@ -230,33 +309,86 @@ button:hover {
       return rows.length;
     }
 
-document.getElementById("exportBtn").addEventListener("click", async () => {
-  const status = document.getElementById("status");
-  const policyId = document.getElementById("policyId").value.trim();
+    document.getElementById("exportBtn").addEventListener("click", async () => {
+      const status = document.getElementById("status");
+      const policyId = document.getElementById("policyId").value.trim();
 
-  if (!policyId) {
-    status.textContent = "❌ Debes ingresar una Policy ID";
-    return;
-  }
+      if (!policyId) {
+        status.textContent = "❌ Debes ingresar una Policy ID";
+        return;
+      }
 
-  status.textContent = "⏳ Obteniendo alertas...";
-  try {
-    const alerts = await fetchAllAlerts(policyId);
+      status.textContent = "⏳ Obteniendo alertas...";
+      try {
+        const alerts = await fetchAllAlerts(policyId);
 
-    if (alerts.length === 0) {
-      status.textContent = "⚠️ No existen alertas asociadas a esta Policy ID";
-      return; // 👈 evita que se descargue el Excel
+        if (alerts.length === 0) {
+          status.textContent = "⚠️ No existen alertas asociadas a esta Policy ID";
+          return; // 👈 evita que se descargue el Excel
+        }
+
+        const count = exportToExcel(alerts);
+        status.textContent = `✅ Exportadas ${count} alertas a alerts.xlsx`;
+      } catch (err) {
+        console.error(err);
+        status.textContent = "❌ Error al exportar alertas. Revisa la consola.";
+      }
+    });
+
+    // --- Lógica del menú de pestañas ---
+    function showTab(tabId) {
+      // Oculta todo el contenido de las pestañas
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+
+      // Quita la clase 'active' de todas las pestañas
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+
+      // Muestra el contenido de la pestaña seleccionada y activa la pestaña
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+  </script>
+
+  <script>
+  const alertCountEl = document.getElementById("alertCount");
+
+  document.getElementById("exportBtn").addEventListener("click", async () => {
+    const status = document.getElementById("status");
+    const policyId = document.getElementById("policyId").value.trim();
+
+    if (!policyId) {
+      status.textContent = "❌ Debes ingresar una Policy ID";
+      return;
     }
 
-    const count = exportToExcel(alerts);
-    status.textContent = `✅ Exportadas ${count} alertas a alerts.xlsx`;
-  } catch (err) {
-    console.error(err);
-    status.textContent = "❌ Error al exportar alertas. Revisa la consola.";
-  }
-});
+    status.textContent = "⏳ Obteniendo alertas...";
+    try {
+      const alerts = await fetchAllAlerts(policyId);
 
-  </script>
+      if (alerts.length === 0) {
+        status.textContent = "⚠️ No existen alertas asociadas a esta Policy ID";
+        alertCountEl.textContent = "Alertas configuradas: 0";
+        return;
+      }
+
+      const count = exportToExcel(alerts);
+      status.textContent = `✅ Exportadas ${count} alertas a alerts.xlsx`;
+
+      // ✅ Mostrar total de alertas configuradas
+      alertCountEl.textContent = `Total de alertas configuradas: ${alerts.length}`;
+      showTab('tab-example'); // cambia automáticamente a la pestaña "Alertas Configuradas"
+
+    } catch (err) {
+      console.error(err);
+      status.textContent = "❌ Error al exportar alertas. Revisa la consola.";
+      alertCountEl.textContent = "";
+    }
+  });
+</script>
 </body>
 
 </html>

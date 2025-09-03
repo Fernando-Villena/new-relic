@@ -4,7 +4,7 @@ import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
 
-dotenv.config(); 
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +17,68 @@ app.use(express.static(path.join(path.resolve(), "public")));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(path.resolve(), "public/index.html"));
+});
+
+// 🚀 Aquí van los endpoints **después** de inicializar app
+app.get("/alerts-all", async (req, res) => {
+  let allConditions = [];
+  let cursor = null;
+
+  try {
+    do {
+      const query = `{
+        actor {
+          account(id: ${ACCOUNT_ID}) {
+            alerts {
+              nrqlConditionsSearch(cursor: ${cursor ? `"${cursor}"` : null}) {
+                nrqlConditions {
+                  id
+                  name
+                  description
+                  enabled
+                  type
+                  runbookUrl
+                  nrql { query }
+                  terms {
+                    operator
+                    threshold
+                    priority
+                    thresholdDuration
+                    thresholdOccurrences
+                  }
+                }
+                nextCursor
+                totalCount
+              }
+            }
+          }
+        }
+      }`;
+
+      const response = await fetch("https://api.newrelic.com/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "API-Key": NEW_RELIC_API_KEY,
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      const data = await response.json();
+      const result = data?.data?.actor?.account?.alerts?.nrqlConditionsSearch;
+      if (!result) break;
+
+      allConditions = allConditions.concat(result.nrqlConditions);
+      cursor = result.nextCursor;
+
+    } while (cursor);
+
+    res.json(allConditions);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener todas las alertas" });
+  }
 });
 
 app.post("/alerts", async (req, res) => {
