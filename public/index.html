@@ -236,14 +236,26 @@
   <pre><code>
   // <span style="color:#2ea043; font-weight:bold;">Resumen de alertas configuradas:</span>
 
-  Este panel permite ver un resumen del total de alertas existentes en el sistema. 
-  Puedes obtener un conteo rápido de todas las alertas configuradas haciendo clic en 
-  "<span style="color:#2ea043; font-weight:bold;">Contar total de alertas</span>".
+  Este panel permite exportar todas las alertas existentes en el sistema
+  a un archivo Excel haciendo clic en 
+  "<span style="color:#2ea043; font-weight:bold;">Exportar todas las alertas</span>".
+
+  El archivo contendrá para cada alerta:
+    - <span style="color:#d2a8ff;">ID</span>, <span style="color:#d2a8ff;">Nombre</span> y <span style="color:#d2a8ff;">Descripción</span>
+    - Estado (<span style="color:#2ea043;">habilitada</span> o no)
+    - Tipo de condición
+    - Runbook asociado
+    - Consulta <span style="color:#d2a8ff;">NRQL</span>
+    - Detalles de umbral, operador, prioridad, duración y ocurrencias
+
+  Si no hay alertas configuradas, se mostrará un aviso en pantalla.
   </code></pre>
 
-  <button id="countAlertsBtn">Contar total de alertas </button>
-  <div id="alertsCountPanel" style="margin-top:15px;font-weight:bold;"></div>
+  <button id="exportAllBtn">Exportar todas las alertas</button>
+  <div id="statusAll"></div>
 </div>
+
+
 
 
     </div>
@@ -408,6 +420,64 @@
       alertCountEl.textContent = "";
     }
   });
+
+
+  function exportAllToExcel(conditions) {
+  const rows = conditions.map(c => ({
+    ID: c.id,
+    Nombre: c.name,
+    Descripción: c.description || "",
+    Habilitada: c.enabled ? "Sí" : "No",
+    Tipo: c.type,
+    Runbook: c.runbookUrl || "No",
+    NRQL: c.nrql?.query || "",
+    Umbral: c.terms?.[0]?.threshold || "",
+    Operador: c.terms?.[0]?.operator || "",
+    Prioridad: c.terms?.[0]?.priority || "",
+    DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
+    Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
+  }));
+
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
+  XLSX.writeFile(workbook, "all_alerts.xlsx");
+
+  return rows.length;
+}
+
+
+document.getElementById("exportAllBtn").addEventListener("click", async () => {
+  const statusAll = document.getElementById("statusAll");
+  statusAll.textContent = "⏳ Obteniendo todas las alertas...";
+
+  try {
+    const response = await fetch(`${BASE_URL}/alerts-all`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" }
+    });
+
+    if (!response.ok) throw new Error("Error al obtener todas las alertas");
+
+    const allAlerts = await response.json();
+    if (allAlerts.length === 0) {
+      statusAll.textContent = "⚠️ No hay alertas configuradas";
+      return;
+    }
+
+    const count = exportAllToExcel(allAlerts);
+
+
+
+    statusAll.innerHTML = `<pre><code>// <span style="color:#ffdd57; font-weight:bold;">✅ Exportadas ${count} alertas a all_alerts.xlsx</span></code></pre>`;
+
+
+  } catch (err) {
+    console.error(err);
+    statusAll.textContent = "❌ Error al exportar todas las alertas";
+  }
+});
+
 </script>
 </body>
 
