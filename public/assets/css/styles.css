@@ -1,0 +1,106 @@
+   /* Estilos basados en la página de Node.js */
+    :root {
+      --color-primary: #2ea043;
+      --color-secondary: #e6edf3;
+      --color-dark-1: #191e25;
+      --color-dark-2: #12161b;
+      --color-dark-3: #0d1117;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--color-dark-1);
+      color: var(--color-secondary);
+      position: relative;
+      overflow: hidden;
+      background-image: radial-gradient(rgba(46, 160, 67, 0.15) 2px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+
+    .container {
+      text-align: center;
+      max-width: 600px;
+      position: relative;
+      z-index: 1;
+      padding: 20px;
+    }
+
+    h1 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      font-size: 2.5rem;
+      font-weight: normal;
+      margin-bottom: 20px;
+      color: white;
+      text-shadow: none;
+    }
+
+    .card {
+      background-color: var(--color-dark-2);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      margin-top: 30px;
+      padding: 20px 25px;
+      text-align: left;
+    }
+
+    .card pre {
+      margin: 0;
+    }
+
+    .card code {
+      color: var(--color-secondary);
+      font-family: monospace;
+      font-size: 0.9em;
+      text-shadow: 0 0 5px rgba(46, 160, 67, 0.5);
+    }
+
+    input,
+    button {
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      margin: 15px 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease-in-out;
+    }
+
+    input {
+      width: 250px;
+      background-color: #161b22;
+      color: var(--color-secondary);
+      border: 1px solid #30363d;
+    }
+
+    /* 🔹 Flechas del input number al mismo color que el texto */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: inner-spin-button;
+      filter: invert(90%) sepia(10%) saturate(200%) hue-rotate(180deg);
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield;
+      /* Para Firefox */
+    }
+
+    button {
+      background: linear-gradient(to right, #2e6438, #224b2b);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #4dbd6b, #2f7a45);
+      /* Hover un poco más claro */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    }

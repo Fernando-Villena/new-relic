@@ -7,210 +7,13 @@
   <title>Obserbavilidad</title>
   <link rel="icon" type="image/png" href="assets/logo-title.png">
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="assets/css/overlay.css">
+  <link rel="stylesheet" href="assets/css/spinner.css">
+  <link rel="stylesheet" href="assets/css/tabs.css">
+  <link rel="stylesheet" href="assets/css/status.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
   <style>
-    /* Estilos basados en la página de Node.js */
-    :root {
-      --color-primary: #2ea043;
-      --color-secondary: #e6edf3;
-      --color-dark-1: #191e25;
-      --color-dark-2: #12161b;
-      --color-dark-3: #0d1117;
-    }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: var(--color-dark-1);
-      color: var(--color-secondary);
-      position: relative;
-      overflow: hidden;
-      background-image: radial-gradient(rgba(46, 160, 67, 0.15) 2px, transparent 1px);
-      background-size: 40px 40px;
-    }
-
-
-    .container {
-      text-align: center;
-      max-width: 600px;
-      position: relative;
-      z-index: 1;
-      padding: 20px;
-    }
-
-    h1 {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-      font-size: 2.5rem;
-      font-weight: normal;
-      margin-bottom: 20px;
-      color: white;
-      text-shadow: none;
-    }
-
-    .card {
-      background-color: var(--color-dark-2);
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      margin-top: 30px;
-      padding: 20px 25px;
-      text-align: left;
-    }
-
-    .card pre {
-      margin: 0;
-    }
-
-    .card code {
-      color: var(--color-secondary);
-      font-family: monospace;
-      font-size: 0.9em;
-      text-shadow: 0 0 5px rgba(46, 160, 67, 0.5);
-    }
-
-    input,
-    button {
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: none;
-      margin: 15px 5px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      transition: all 0.2s ease-in-out;
-    }
-
-    input {
-      width: 250px;
-      background-color: #161b22;
-      color: var(--color-secondary);
-      border: 1px solid #30363d;
-    }
-
-    /* 🔹 Flechas del input number al mismo color que el texto */
-    input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button {
-      -webkit-appearance: inner-spin-button;
-      filter: invert(90%) sepia(10%) saturate(200%) hue-rotate(180deg);
-    }
-
-    input[type=number] {
-      -moz-appearance: textfield;
-      /* Para Firefox */
-    }
-
-    button {
-      background: linear-gradient(to right, #2e6438, #224b2b);
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    button:hover {
-      background: linear-gradient(to right, #4dbd6b, #2f7a45);
-      /* Hover un poco más claro */
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    }
-
-    #status {
-      margin-top: 20px;
-      font-weight: bold;
-      transition: color 0.3s;
-    }
-
-    /* --- Estilos para el nuevo menú de pestañas --- */
-    .tab-menu {
-      display: flex;
-      justify-content: flex-start;
-      border-bottom: 1px solid #30363d;
-    }
-
-    .tab {
-      padding: 10px 15px;
-      cursor: pointer;
-      color: #8b949e;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s ease-in-out;
-    }
-
-    .tab:hover {
-      color: #e6edf3;
-    }
-
-    .tab.active {
-      color: #e6edf3;
-      border-bottom: 2px solid #2ea043;
-    }
-
-    .tab-content {
-      display: none;
-      padding-top: 20px;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-
-  /* Overlay que bloquea la pantalla */
-  #loadingOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(13, 17, 23, 0.9); /* Fondo oscuro */
-    display: none; /* Oculto por defecto */
-    justify-content: center;
-    align-items: center;
-    flex-direction: column; /* Spinner arriba, texto abajo */
-    z-index: 9999;
-  }
-
-  /* Spinner más pequeño */
-  .spinner {
-    border: 4px solid rgba(255, 255, 255, 0.2);
-    border-top: 4px solid #2ea043;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 0.9s linear infinite;
-    margin-bottom: 15px;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  /* Texto debajo del spinner */
-  #loadingText {
-    color: #fff;
-    font-size: 16px;
-    font-weight: 500;
-    font-family: Arial, sans-serif;
-    display: flex;
-    align-items: center;
-  }
-
-  /* Puntitos animados suaves */
-  .dot {
-    animation: blink 1.5s infinite;
-    opacity: 0;
-  }
-
-  .dot:nth-child(1) { animation-delay: 0s; }
-  .dot:nth-child(2) { animation-delay: 0.3s; }
-  .dot:nth-child(3) { animation-delay: 0.6s; }
-
-  @keyframes blink {
-    0%, 20% { opacity: 0; }
-    30%, 80% { opacity: 1; }
-    100% { opacity: 0; }
-  }
   </style>
 </head>
 
@@ -219,6 +22,7 @@
     <h1>Herramienta de Alertas New Relic</h1>
 
     <div class="card">
+
       <div class="tab-menu">
         <span class="tab active" onclick="showTab('tab-use')">Policy</span>
         <span class="tab" onclick="showTab('tab-example')">Alertas Configuradas</span>
@@ -230,6 +34,8 @@
           Ingresa un <strong>Policy ID</strong> para obtener información detallada de las alertas asociadas a esa
           política. Podrás exportarlas directamente a un archivo Excel.
         </p>
+
+
         <pre><code>
   // <span style="color:#2ea043; font-weight:bold;">Cómo usar la aplicación:</span>
 
@@ -264,7 +70,8 @@
 
 
       <div id="tab-example" class="tab-content">
-        <pre><code>
+
+        <pre> <code>
   // <span style="color:#2ea043; font-weight:bold;">Resumen de alertas configuradas:</span>
 
   Este panel permite exportar todas las alertas existentes en el sistema
@@ -280,7 +87,8 @@
     - Detalles de umbral, operador, prioridad, duración y ocurrencias
 
   Si no hay alertas configuradas, se mostrará un aviso en pantalla.
-  </code></pre>
+    </code>  </pre>
+
 
         <button id="exportAllBtn">Exportar todas las alertas</button>
         <div id="statusAll"></div>
@@ -290,66 +98,39 @@
 
 
     </div>
+  </div>
 
-
-    <!-- Los inputs y el botón ahora están dentro de la pestaña Policy -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText">Extrayendo alertas<span class="dot">.</span><span class="dot">.</span><span
+        class="dot">.</span></div>
   </div>
 
 
-
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script>
 
-    // const BASE_URL = window.location.hostname.includes("localhost") ?
-    //   "http://localhost:3000" :
-    //   "https://new-relic.onrender.com";
+    const BASE_URL = window.location.hostname.includes("localhost") ?
+      "http://localhost:3000" :
+      "https://new-relic.onrender.com";
 
-    const BASE_URL =
-      "http://localhost:3000"
+    // const BASE_URL = "http://localhost:3000";
 
-    // --- Contar alertas configuradas ---
-    const countAlertsBtn = document.getElementById("countAlertsBtn");
-    const alertsCountPanel = document.getElementById("alertsCountPanel");
+    // 🔹 Función genérica para obtener alertas
+    async function fetchAlerts(endpoint, body = null) {
+      const options = {
+        method: body ? "POST" : "GET",
+        headers: { "Content-Type": "application/json" },
+        body: body ? JSON.stringify(body) : null,
+      };
 
-    if (countAlertsBtn) {
-      countAlertsBtn.addEventListener("click", async () => {
-        alertsCountPanel.textContent = "⏳ Contando alertas...";
-        try {
-          const response = await fetch(`${BASE_URL}/alerts-all`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json"
-            }
-          });
-          if (!response.ok) throw new Error("Error al obtener todas las alertas");
-          const allAlerts = await response.json();
-          alertsCountPanel.innerHTML = `<pre><code>// <span style="color:#ffdd57; font-weight:bold;">Total de alertas configuradas:</span> ${allAlerts.length}</code></pre>`;
-
-        } catch (err) {
-          console.error(err);
-          alertsCountPanel.textContent = "❌ Error al contar las alertas.";
-        }
-      });
-    }
-
-
-    async function fetchAllAlerts(policyId) {
-      const response = await fetch(`${BASE_URL}/alerts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          policyId
-        })
-      });
-
+      const response = await fetch(`${BASE_URL}/${endpoint}`, options);
       if (!response.ok) throw new Error("Error al obtener alertas del servidor");
       return await response.json();
     }
 
-    function exportToExcel(conditions) {
-      const rows = conditions.map(c => ({
+    // 🔹 Transformar condiciones en filas de Excel
+    function mapAlertsToRows(conditions) {
+      return conditions.map(c => ({
         ID: c.id,
         Nombre: c.name,
         Descripción: c.description || "",
@@ -366,165 +147,86 @@
         NombreEntidad: c.realEntity?.name || "",
         TipoEntidad: c.realEntity?.type || ""
       }));
+    }
 
+    // 🔹 Función genérica para exportar a Excel
+    function exportToExcel(conditions, filename) {
+      const rows = mapAlertsToRows(conditions);
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.json_to_sheet(rows);
       XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
-      XLSX.writeFile(workbook, "alerts.xlsx");
-
+      XLSX.writeFile(workbook, filename);
       return rows.length;
     }
+
+    // 🔹 Mostrar mensaje con estilo consola
+    function setStatus(el, msg, type = "info") {
+      const colors = {
+        success: "#4caf50",   // verde
+        error: "#ff4d4f",     // rojo
+        warning: "#ffdd57",   // amarillo
+        info: "#00c0ff"       // celeste
+      };
+
+      el.innerHTML = `<pre><code>// <span style="color:${colors[type]}; font-weight:bold;">${msg}</span></code></pre>`;
+    }
+
+    // 🔹 Exportar por Policy ID
     document.getElementById("exportBtn").addEventListener("click", async () => {
       const status = document.getElementById("status");
       const policyId = document.getElementById("policyId").value.trim();
 
       if (!policyId) {
-        status.textContent = "❌ Debes ingresar una Policy ID";
+        setStatus(status, "❌ Debes ingresar una Policy ID", "error");
         return;
       }
 
-      statusAll.textContent = "";
       showLoading();
       try {
-        const alerts = await fetchAllAlerts(policyId);
+        const alerts = await fetchAlerts("alerts", { policyId });
 
         if (alerts.length === 0) {
-          status.textContent = "⚠️ No existen alertas asociadas a esta Policy ID";
-          return; // 👈 evita que se descargue el Excel
-        }
-
-        const count = exportToExcel(alerts);
-        status.textContent = `✅ Exportadas ${count} alertas a alerts.xlsx`;
-        hideLoading();
-      } catch (err) {
-        console.error(err);
-        status.textContent = "❌ Error al exportar alertas. Revisa la consola.";
-      }
-    });
-
-    // --- Lógica del menú de pestañas ---
-    function showTab(tabId) {
-      // Oculta todo el contenido de las pestañas
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-      });
-
-      // Quita la clase 'active' de todas las pestañas
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-
-      // Muestra el contenido de la pestaña seleccionada y activa la pestaña
-      document.getElementById(tabId).classList.add('active');
-      event.currentTarget.classList.add('active');
-    }
-  </script>
-
-  <script>
-    const alertCountEl = document.getElementById("alertCount");
-
-    function exportAllToExcel(conditions) {
-      const rows = conditions.map(c => ({
-        ID: c.id,
-        Nombre: c.name,
-        Descripción: c.description || "",
-        Habilitada: c.enabled ? "Sí" : "No",
-        Tipo: c.type,
-        Runbook: c.runbookUrl || "No",
-        NRQL: c.nrql?.query || "",
-        Umbral: c.terms?.[0]?.threshold || "",
-        Operador: c.terms?.[0]?.operator || "",
-        Prioridad: c.terms?.[0]?.priority || "",
-        DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
-        Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
-        GuidEntidad: c.realEntity?.guid || "",
-        NombreEntidad: c.realEntity?.name || "",
-        TipoEntidad: c.realEntity?.type || ""
-      }));
-
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.json_to_sheet(rows);
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas");
-      XLSX.writeFile(workbook, "all_alerts.xlsx");
-
-      return rows.length;
-    }
-
-    document.getElementById("exportAllBtn").addEventListener("click", async () => {
-      const statusAll = document.getElementById("statusAll");
-      statusAll.textContent = "⏳ Obteniendo todas las alertas...";
-
-      statusAll.textContent = "";
-      showLoading();
-
-      try {
-        const response = await fetch(`${BASE_URL}/alerts-all`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" }
-        });
-
-        if (!response.ok) throw new Error("Error al obtener todas las alertas");
-
-        const allAlerts = await response.json();
-        if (allAlerts.length === 0) {
-
-
-          statusAll.textContent = "⚠️ No hay alertas configuradas";
+          setStatus(status, "⚠️ No existen alertas asociadas a esta Policy ID", "warning");
           return;
         }
 
-        const count = exportAllToExcel(allAlerts);
-
-        statusAll.innerHTML = `<pre><code>// <span style="color:#ffdd57; font-weight:bold;">✅ Exportadas ${count} alertas a all_alerts.xlsx</span></code></pre>`;
-        hideLoading();
+        const count = exportToExcel(alerts, "alerts.xlsx");
+        setStatus(status, `✅ Exportadas ${count} alertas a alerts.xlsx`, "success");
       } catch (err) {
         console.error(err);
-        statusAll.textContent = "❌ Error al exportar todas las alertas";
+        setStatus(status, "❌ Error al exportar alertas. Revisa la consola.", "error");
+      } finally {
+        hideLoading();
       }
     });
 
+    // 🔹 Exportar todas las alertas
+    document.getElementById("exportAllBtn").addEventListener("click", async () => {
+      const statusAll = document.getElementById("statusAll");
 
-  const messages = [
-    "Extrayendo alertas",
-    "Espere un momento, por favor",
-    "Cargando información"
-  ];
-  let msgIndex = 0;
-  let messageInterval;
+      showLoading();
+      try {
+        const allAlerts = await fetchAlerts("alerts-all");
 
-function startMessageRotation() {
-  const loadingText = document.getElementById("loadingText");
-  if (!loadingText) return;
-  messageInterval = setInterval(() => {
-    msgIndex = (msgIndex + 1) % messages.length;
-    loadingText.childNodes[0].nodeValue = messages[msgIndex];
-  }, 5000); // Cambia cada 5 segundos
-}
-
-  function stopMessageRotation() {
-    clearInterval(messageInterval);
-  }
-
-  function showLoading() {
-    const overlay = document.getElementById("loadingOverlay");
-    if (!overlay) return;
-    overlay.style.display = "flex";
-    startMessageRotation();
-  }
-
-  function hideLoading() {
-    const overlay = document.getElementById("loadingOverlay");
-    if (!overlay) return;
-    overlay.style.display = "none";
-    stopMessageRotation();
-  }
-
+        if (allAlerts.length === 0) {
+          setStatus(statusAll, "⚠️ No hay alertas configuradas", "warning");
+          return;
+        }
+        const count = exportToExcel(allAlerts, "all_alerts.xlsx");
+        setStatus(statusAll, `✅ Exportadas ${count} alertas a all_alerts.xlsx`, "success");
+      } catch (err) {
+        console.error(err);
+        setStatus(statusAll, "❌ Error al exportar todas las alertas", "error");
+      } finally {
+        hideLoading();
+      }
+    });
   </script>
 
-<div id="loadingOverlay">
-  <div class="spinner"></div>
-  <div id="loadingText">Extrayendo alertas<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
-</div>
+  <script src="assets/js/pantalla-carga.js"></script>
+  <script src="assets/js/tab.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
 </body>
 
 </html>
