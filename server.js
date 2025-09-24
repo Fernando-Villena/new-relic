@@ -92,37 +92,49 @@ function extractGuidFromNrql(nrqlQuery) {
 }
 
 // Enriquecer condiciones: añade realEntity y termsText
+// Enriquecer condiciones: añade realEntity y termsText
 async function enrichConditions(conditions) {
   if (!Array.isArray(conditions)) return conditions;
+
   // Procesar en paralelo para agilizar
-  const enriched = await Promise.all(conditions.map(async (condition) => {
-    // extraer GUID preferentemente desde NRQL query
-    const guidFromNrql = extractGuidFromNrql(condition.nrql?.query);
-    const guid = guidFromNrql || condition.entity?.guid || null;
+  const enriched = await Promise.all(
+    conditions.map(async (condition) => {
+      // Extraer GUID preferentemente desde NRQL query
+      const guidFromNrql = extractGuidFromNrql(condition.nrql?.query);
+      const guid = guidFromNrql || condition.entity?.guid || null;
 
-    let realEntity = { guid: guid || null, name: condition.entity?.name || null, type: condition.entity?.type || null };
-    if (guid) {
-      const entityData = await getEntityByGuid(guid);
-      realEntity = {
-        guid,
-        name: entityData?.name || condition.entity?.name || null,
-        type: entityData?.type || condition.entity?.type || null
-      };
-    }
+      // Inicializar realEntity sin usar el nombre de la alerta
+      let realEntity = { guid: guid || null, name: null, type: null };
 
-    condition.realEntity = realEntity;
+      if (guid) {
+        try {
+          const entityData = await getEntityByGuid(guid);
+          realEntity = {
+            guid,
+            name: entityData?.name || null,
+            type: entityData?.type || null,
+          };
+        } catch (err) {
+          console.error("Error obteniendo entidad por GUID:", err);
+        }
+      }
 
-    if (Array.isArray(condition.terms) && condition.terms.length > 0) {
-      condition.termsText = condition.terms.map(formatTerm).join(" ; ");
-    } else {
-      condition.termsText = "";
-    }
+      condition.realEntity = realEntity;
 
-    return condition;
-  }));
+      // Formatear términos
+      if (Array.isArray(condition.terms) && condition.terms.length > 0) {
+        condition.termsText = condition.terms.map(formatTerm).join(" ; ");
+      } else {
+        condition.termsText = "";
+      }
+
+      return condition;
+    })
+  );
 
   return enriched;
 }
+
 
 async function getAllPolicies() {
   let policies = [];
