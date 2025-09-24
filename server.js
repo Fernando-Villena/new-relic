@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
+import pLimit from "p-limit";
 
 dotenv.config();
 
@@ -21,15 +22,25 @@ app.get("/", (req, res) => {
 
 // Función genérica para consultar GraphQL de New Relic
 async function graphqlQuery(query) {
-  const resp = await fetch("https://api.newrelic.com/graphql", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "API-Key": NEW_RELIC_API_KEY,
-    },
-    body: JSON.stringify({ query }),
-  });
-  return resp.json();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000); // 15s
+  try {
+    const resp = await fetch("https://api.newrelic.com/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "API-Key": NEW_RELIC_API_KEY,
+      },
+      body: JSON.stringify({ query }),
+      signal: controller.signal
+    });
+    return await resp.json();
+  } catch (err) {
+    console.error("Error graphqlQuery:", err);
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // Obtener entidad por GUID (name + type)
@@ -92,48 +103,49 @@ function extractGuidFromNrql(nrqlQuery) {
 }
 
 // Enriquecer condiciones: añade realEntity y termsText
-// Enriquecer condiciones: añade realEntity y termsText
 async function enrichConditions(conditions) {
   if (!Array.isArray(conditions)) return conditions;
 
-  // Procesar en paralelo para agilizar
-  const enriched = await Promise.all(
-    conditions.map(async (condition) => {
-      // Extraer GUID preferentemente desde NRQL query
-      const guidFromNrql = extractGuidFromNrql(condition.nrql?.query);
-      const guid = guidFromNrql || condition.entity?.guid || null;
+  const limit = pLimit(5); // máximo 5 solicitudes concurrentes
 
-      // Inicializar realEntity sin usar el nombre de la alerta
-      let realEntity = { guid: guid || null, name: null, type: null };
+  return await Promise.all(
+    conditions.map(cond => limit(async () => {
+      const guid = extractGuidFromNrql(cond.nrql?.query) || cond.entity?.guid || null;
+
+      // Fallback si getEntityByGuid falla
+      let realEntity = {
+        guid: guid || null,
+        name: cond.entity?.name || "unknown",
+        type: cond.entity?.type || "unknown"
+      };
 
       if (guid) {
         try {
           const entityData = await getEntityByGuid(guid);
-          realEntity = {
-            guid,
-            name: entityData?.name || null,
-            type: entityData?.type || null,
-          };
+          if (entityData) {
+            realEntity = {
+              guid,
+              name: entityData.name || cond.entity?.name || "unknown",
+              type: entityData.type || cond.entity?.type || "unknown"
+            };
+          }
         } catch (err) {
-          console.error("Error obteniendo entidad por GUID:", err);
+          // registrar solo una vez por error
+          console.error("Error getEntityByGuid:", err.message || err);
         }
       }
 
-      condition.realEntity = realEntity;
+      cond.realEntity = realEntity;
 
-      // Formatear términos
-      if (Array.isArray(condition.terms) && condition.terms.length > 0) {
-        condition.termsText = condition.terms.map(formatTerm).join(" ; ");
-      } else {
-        condition.termsText = "";
-      }
+      cond.termsText = Array.isArray(cond.terms)
+        ? cond.terms.map(formatTerm).join(" ; ")
+        : "";
 
-      return condition;
-    })
+      return cond;
+    }))
   );
-
-  return enriched;
 }
+
 
 
 async function getAllPolicies() {
