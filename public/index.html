@@ -50,13 +50,21 @@
      descargará un archivo "<span style="color:#ff7b72;">alerts.xlsx</span>".
 
   <span style="color:#58a6ff;">4.</span> El archivo Excel contendrá:  
-     - <span style="color:#d2a8ff;">ID</span>, <span style="color:#d2a8ff;">Nombre</span> y <span style="color:#d2a8ff;">Descripción</span>  
-     - Estado (<span style="color:#2ea043;">habilitada</span> o no)  
-     - Tipo de condición  
-     - Runbook asociado  
-     - Consulta <span style="color:#d2a8ff;">NRQL</span>  
-     - Detalles de umbral, operador, prioridad,  
-       duración y ocurrencias
+  - <span style="color:#d2a8ff;">Policy ID</span>: Identificador de la política a la que pertenece la alerta.
+  - <span style="color:#d2a8ff;">Policy</span>: Nombre de la política asociada.
+  - <span style="color:#d2a8ff;">ID</span>: Identificador único de la alerta.
+  - <span style="color:#d2a8ff;">NombreAlerta</span>: Nombre descriptivo de la alerta.
+  - <span style="color:#d2a8ff;">Descripción</span>: Detalles adicionales o contexto de la alerta.
+  - <span style="color:#2ea043;">Habilitada</span>: Indica si la alerta está activa o deshabilitada.
+  - <span style="color:#d2a8ff;">Tipo</span>: Tipo de condición (por ejemplo, NRQL, infraestructura, etc.).
+  - <span style="color:#d2a8ff;">Runbook</span>: URL o referencia al runbook asociado para respuesta ante la alerta.
+  - <span style="color:#d2a8ff;">NRQL</span>: Consulta NRQL que define la condición de alerta.
+  - <span style="color:#d2a8ff;">Condición</span>: Descripción legible de los umbrales, operadores, 
+  prioridad, duración y ocurrencias.
+  - <span style="color:#d2a8ff;">GuidEntidad</span>: GUID de la entidad a la que aplica la alerta.
+  - <span style="color:#d2a8ff;">NombreEntidad</span>: Nombre de la entidad afectada.
+  - <span style="color:#d2a8ff;">TipoEntidad</span>: Tipo de la entidad (por ejemplo, Aplicación, Servidor, etc.).
+
 
   <span style="color:#58a6ff;">5.</span> Si la <span style="color:#d2a8ff;">Policy ID</span> no tiene alertas asociadas,  
      se mostrará un <span style="color:#ff7b72;">aviso en pantalla</span>  
@@ -79,12 +87,20 @@
   "<span style="color:#2ea043; font-weight:bold;">Exportar todas las alertas</span>".
 
   El archivo contendrá para cada alerta:
-    - <span style="color:#d2a8ff;">ID</span>, <span style="color:#d2a8ff;">Nombre</span> y <span style="color:#d2a8ff;">Descripción</span>
-    - Estado (<span style="color:#2ea043;">habilitada</span> o no)
-    - Tipo de condición
-    - Runbook asociado
-    - Consulta <span style="color:#d2a8ff;">NRQL</span>
-    - Detalles de umbral, operador, prioridad, duración y ocurrencias
+  - <span style="color:#d2a8ff;">Policy ID</span>: Identificador de la política a la que pertenece la alerta.
+  - <span style="color:#d2a8ff;">Policy</span>: Nombre de la política asociada.
+  - <span style="color:#d2a8ff;">ID</span>: Identificador único de la alerta.
+  - <span style="color:#d2a8ff;">NombreAlerta</span>: Nombre descriptivo de la alerta.
+  - <span style="color:#d2a8ff;">Descripción</span>: Detalles adicionales o contexto de la alerta.
+  - <span style="color:#2ea043;">Habilitada</span>: Indica si la alerta está activa o deshabilitada.
+  - <span style="color:#d2a8ff;">Tipo</span>: Tipo de condición (por ejemplo, NRQL, infraestructura, etc.).
+  - <span style="color:#d2a8ff;">Runbook</span>: URL o referencia al runbook asociado para respuesta ante la alerta.
+  - <span style="color:#d2a8ff;">NRQL</span>: Consulta NRQL que define la condición de alerta.
+  - <span style="color:#d2a8ff;">Condición</span>: Descripción legible de los umbrales, operadores, 
+  prioridad, duración y ocurrencias.
+  - <span style="color:#d2a8ff;">GuidEntidad</span>: GUID de la entidad a la que aplica la alerta.
+  - <span style="color:#d2a8ff;">NombreEntidad</span>: Nombre de la entidad afectada.
+  - <span style="color:#d2a8ff;">TipoEntidad</span>: Tipo de la entidad (por ejemplo, Aplicación, Servidor, etc.).
 
   Si no hay alertas configuradas, se mostrará un aviso en pantalla.
     </code>  </pre>
@@ -109,11 +125,11 @@
 
   <script>
 
-    const BASE_URL = window.location.hostname.includes("localhost") ?
-      "http://localhost:3000" :
-      "https://new-relic.onrender.com";
+    // const BASE_URL = window.location.hostname.includes("localhost") ?
+    //   "http://localhost:3000" :
+    //   "https://new-relic.onrender.com";
 
-    // const BASE_URL = "http://localhost:3000";
+    const BASE_URL = "http://localhost:3000";
 
     // 🔹 Función genérica para obtener alertas
     async function fetchAlerts(endpoint, body = null) {
@@ -129,25 +145,24 @@
     }
 
     // 🔹 Transformar condiciones en filas de Excel
-    function mapAlertsToRows(conditions) {
-      return conditions.map(c => ({
-        ID: c.id,
-        Nombre: c.name,
-        Descripción: c.description || "",
-        Habilitada: c.enabled ? "Sí" : "No",
-        Tipo: c.type,
-        Runbook: c.runbookUrl || "No",
-        NRQL: c.nrql?.query || "",
-        Umbral: c.terms?.[0]?.threshold || "",
-        Operador: c.terms?.[0]?.operator || "",
-        Prioridad: c.terms?.[0]?.priority || "",
-        DuraciónSegs: c.terms?.[0]?.thresholdDuration || "",
-        Ocurrencias: c.terms?.[0]?.thresholdOccurrences || "",
-        GuidEntidad: c.realEntity?.guid || "",
-        NombreEntidad: c.realEntity?.name || "",
-        TipoEntidad: c.realEntity?.type || ""
-      }));
-    }
+function mapAlertsToRows(conditions) {
+  return conditions.map(c => ({
+    PolicyID: c.policyId || "",
+    Policy: c.policyName || "",
+    ID: c.id,
+    NombreAlerta: c.name,
+    Descripción: c.description || "",
+    Habilitada: c.enabled ? "Sí" : "No",
+    Tipo: c.type,
+    Runbook: c.runbookUrl || "No",
+    NRQL: c.nrql?.query || "",
+    Condición: c.termsText || "",
+    GuidEntidad: c.realEntity?.guid || "",
+    NombreEntidad: c.realEntity?.name || "",
+    TipoEntidad: c.realEntity?.type || ""
+  }));
+}
+
 
     // 🔹 Función genérica para exportar a Excel
     function exportToExcel(conditions, filename) {
