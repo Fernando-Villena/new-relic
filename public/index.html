@@ -125,11 +125,11 @@
 
   <script>
 
-    // const BASE_URL = window.location.hostname.includes("localhost") ?
-    //   "http://localhost:3000" :
-    //   "https://new-relic.onrender.com";
+    const BASE_URL = window.location.hostname.includes("localhost") ?
+      "http://localhost:3000" :
+      "https://new-relic.onrender.com";
 
-    const BASE_URL = "http://localhost:3000";
+    // const BASE_URL = "http://localhost:3000";
 
     // 🔹 Función genérica para obtener alertas
     async function fetchAlerts(endpoint, body = null) {
