@@ -319,41 +319,31 @@ async function getAllEntities() {
 
   console.log(`Iniciando getAllEntities. ACCOUNT_ID: ${ACCOUNT_ID}`);
 
-  // Lista de tipos de entidades que queremos obtener
-  const entityTypes = [
-    'APPLICATION',
-    'HOST',
-    'BROWSER_APPLICATION',
-    'MOBILE_APPLICATION',
-    'SYNTHETIC_MONITOR',
-    'WORKLOAD',
-    'DASHBOARD',
-    'KEY_TRANSACTION',
-    'SERVICE_LEVEL',
-    'APACHE_SERVER',
-    'MSSQL_INSTANCE',
-    'MYSQL_NODE',
-    'ORACLEDB_INSTANCE',
-    'VSPHERE_CLUSTER',
-    'VSPHERE_DATACENTER',
-    'VSPHERE_DATASTORE',
-    'VSPHERE_HOST',
-    'VSPHERE_VM',
-    'WINDOWS_SERVICE',
-    'FIREWALL',
-    'ROUTER',
-    'SWITCH',
-    'TRAP_DEVICE',
-    'SECURE_CREDENTIAL',
-    'PRIVATE_LOCATION'
+  // Lista de criterios de búsqueda para asegurar que traemos todo (APM, Infra, etc.)
+  const searchQueries = [
+    "domain = 'APM'",          // Todos los servicios APM
+    "domain = 'BROWSER'",      // Aplicaciones Browser
+    "domain = 'MOBILE'",       // Aplicaciones Mobile
+    "domain = 'INFRA' AND type = 'HOST'", // Hosts físicos/virtuales
+    "domain = 'SYNTH'",        // Monitores Sintéticos
+    "type = 'WORKLOAD'",       // Workloads
+    "type = 'DASHBOARD'",      // Dashboards
+    "type = 'KEY_TRANSACTION'", // Transacciones clave
+    "domain = 'INFRA' AND type = 'VSPHERE_VM'", // VMs de vSphere
+    "domain = 'INFRA' AND type = 'VSPHERE_HOST'", // Hosts de vSphere
+    "domain = 'INFRA' AND type = 'STORAGE_VOLUME'", // Datastores
+    "type = 'FIREWALL'",
+    "type = 'ROUTER'",
+    "type = 'SWITCH'",
+    "type = 'TRAP_DEVICE'"
   ];
 
-  // Consultar cada tipo por separado
-  for (const entityType of entityTypes) {
+  // Consultar cada criterio por separado
+  for (const query of searchQueries) {
     const q = `{
       actor {
         entitySearch(
-          query: "type = '${entityType}'"
+          query: "${query}"
         ) {
           results {
             entities {
@@ -367,23 +357,23 @@ async function getAllEntities() {
       }
     }`;
 
-    console.log(`📄 Consultando entidades de tipo: ${entityType}...`);
+    console.log(`📄 Consultando criterio: ${query}...`);
 
     try {
       const resp = await graphqlQuery(q);
 
       if (resp?.errors) {
-        console.error(`❌ Error para tipo ${entityType}:`, JSON.stringify(resp.errors));
+        console.error(`❌ Error para criterio ${query}:`, JSON.stringify(resp.errors));
         continue;
       }
 
       const entities = resp?.data?.actor?.entitySearch?.results?.entities;
       if (entities && entities.length > 0) {
-        console.log(`✓ Encontradas ${entities.length} entidades de tipo ${entityType}`);
+        console.log(`✓ Encontradas ${entities.length} entidades para: ${query}`);
         allEntities = allEntities.concat(entities);
       }
     } catch (err) {
-      console.error(`Error consultando tipo ${entityType}:`, err);
+      console.error(`Error consultando criterio ${query}:`, err);
     }
   }
 
@@ -447,13 +437,25 @@ app.get("/entities", async (req, res) => {
     console.log(`Total de entidades obtenidas: ${entities.length}`);
 
     // 3. Cruzar datos
-    const result = entities.map(ent => ({
-      name: ent.name,
-      type: ent.type,
-      guid: ent.guid,
-      hasAlerts: !!alertedEntitiesMap[ent.guid],
-      alertNames: alertedEntitiesMap[ent.guid] || []
-    }));
+    const result = entities.map(ent => {
+      // Determinar un nombre de tipo más amigable y descriptivo
+      let friendlyType = ent.type;
+      if (ent.type === 'APPLICATION' || ent.type === 'BROWSER_APPLICATION') {
+        if (ent.domain === 'APM') friendlyType = 'APM Service';
+        else if (ent.domain === 'BROWSER') friendlyType = 'Browser Application';
+        else if (ent.domain === 'MOBILE') friendlyType = 'Mobile Application';
+      } else if (ent.type === 'MONITOR') {
+        friendlyType = 'Synthetic Monitor';
+      }
+
+      return {
+        name: ent.name,
+        type: friendlyType,
+        guid: ent.guid,
+        hasAlerts: !!alertedEntitiesMap[ent.guid],
+        alertNames: alertedEntitiesMap[ent.guid] || []
+      };
+    });
 
     res.json(result);
   } catch (err) {
