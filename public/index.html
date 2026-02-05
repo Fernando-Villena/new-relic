@@ -14,23 +14,47 @@
   <link rel="stylesheet" href="assets/css/styles.css">
   <style>
     .entity-config-container {
-      display: flex;
-      gap: 30px;
-      margin: 20px 0;
-      background: rgba(255, 255, 255, 0.05);
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      gap: 15px;
+      margin: 15px 0;
+      background: rgba(13, 17, 23, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       padding: 20px;
-      border-radius: 8px;
-      border: 1px solid rgba(63, 185, 80, 0.2);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
 
     .config-section {
-      flex: 1;
+      position: relative;
+    }
+
+    .config-section h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95em;
+      letter-spacing: 0.3px;
+      margin-bottom: 12px !important;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .config-section h3::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: #3fb950;
+      border-radius: 1px;
+      display: inline-block;
     }
 
     .checkbox-group {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 6px;
+      padding: 5px;
     }
 
     .checkbox-group label {
@@ -38,13 +62,103 @@
       align-items: center;
       gap: 8px;
       cursor: pointer;
-      font-size: 0.9em;
-      color: #c9d1d9;
+      font-size: 0.82em;
+      color: #8b949e;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .checkbox-group label:hover {
+      background: rgba(63, 185, 80, 0.08);
+      border-color: rgba(63, 185, 80, 0.3);
+      color: #f0f6fc;
+      transform: translateY(-2px);
     }
 
     .checkbox-group input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
       cursor: pointer;
       accent-color: #3fb950;
+      filter: drop-shadow(0 0 5px rgba(63, 185, 80, 0.3));
+      margin: 0;
+    }
+
+    .control-pill {
+      background: rgba(88, 166, 255, 0.08);
+      color: #58a6ff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7em;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: 1px solid rgba(88, 166, 255, 0.2);
+    }
+
+    .control-pill:hover {
+      background: #58a6ff;
+      color: #0d1117;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(46, 160, 67, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      margin-top: 5px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(46, 160, 67, 0.4);
+      filter: brightness(1.1);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .status-container {
+      margin-top: 15px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+    }
+
+    .status-container pre {
+      margin: 0;
+      background: transparent !important;
+      padding: 0 !important;
+    }
+
+    .info-banner {
+      background: rgba(56, 139, 253, 0.08);
+      border-left: 3px solid #388bfd;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      color: #adbac7;
+      font-size: 0.85em;
+      line-height: 1.4;
+    }
+
+    /* Reducir margen de inputs para que no se vea comprimido */
+    input[type="number"] {
+      margin-bottom: 15px;
     }
   </style>
 </head>
@@ -64,146 +178,168 @@
 
       <div id="tab-use" class="tab-content active">
 
-        <p style="color:var(--primary-color); margin-bottom:12px;">
-          Ingresa un <strong>Policy ID</strong> para obtener información detallada de las alertas asociadas a esa
-          política. Podrás exportarlas directamente a un archivo Excel.
-        </p>
+        <div class="info-banner" style="margin-top: 20px;">
+          <strong>Búsqueda por Política:</strong> Ingresa un Policy ID y selecciona los campos que deseas incluir en el
+          reporte. La app filtrará las condiciones asociadas a esa política específica.
+        </div>
 
 
-        <pre><code>
-  // <span style="color:#3fb950; font-weight:bold;">Cómo usar la aplicación:</span>
-
-  <span style="color:var(--primary-color);">1.</span> Escribe el <span style="color:#7ee787;">Policy ID</span> en el campo de texto.  
-     (Ejemplo: <span style="color:#d29922;">1234567</span>)
-
-  <span style="color:var(--primary-color);">2.</span> Haz clic en 
-     "<span style="color:#3fb950; font-weight:bold;">Exportar alertas</span>".
-
-  <span style="color:var(--primary-color);">3.</span> La app consultará la 
-     <span style="color:#7ee787;">API de New Relic</span> y, si existen alertas,  
-     descargará un archivo "<span style="color:#f85149;">alerts.xlsx</span>".
-
-  <span style="color:var(--primary-color);">4.</span> El archivo Excel contendrá:  
-  - <span style="color:#7ee787;">Policy ID</span>: ID de la política.
-  - <span style="color:#7ee787;">Policy</span>: Nombre de la política.
-  - <span style="color:#7ee787;">ID</span>: ID de la alerta.
-  - <span style="color:#7ee787;">NombreAlerta</span>: Nombre de la alerta.
-  - <span style="color:#7ee787;">Descripción</span>: Contexto de la alerta.
-  - <span style="color:#3fb950;">Habilitada</span>: Estado (Activa/Inactiva).
-  - <span style="color:#7ee787;">Tipo</span>: Tipo de condición.
-  - <span style="color:#7ee787;">Runbook</span>: Referencia del runbook.
-  - <span style="color:#7ee787;">NRQL</span>: Consulta NRQL.
-  - <span style="color:#7ee787;">Condición</span>: Umbrales y duración.
-  - <span style="color:#7ee787;">GuidEntidad</span>: GUID de la entidad.
-  - <span style="color:#7ee787;">NombreEntidad</span>: Nombre de la entidad.
-  - <span style="color:#7ee787;">TipoEntidad</span>: Tipo de entidad.
-
-
-  <span style="color:var(--primary-color);">5.</span> Si el <span style="color:#7ee787;">Policy ID</span> no tiene alertas,  
-     se mostrará un <span style="color:#f85149;">aviso</span>  
-     y no se descargará nada.
-    </code></pre>
-
-        <input type="number" id="policyId" placeholder="Ingrese Policy ID">
-        <button id="exportBtn">Exportar alertas</button>
-        <div id="status"></div>
-      </div>
-
-
-      <div id="tab-example" class="tab-content">
-
-        <pre> <code>
-  // <span style="color:#3fb950; font-weight:bold;">Resumen de alertas configuradas:</span>
-
-  Este panel permite exportar todas las alertas existentes en el sistema
-  a un archivo Excel haciendo clic en 
-  "<span style="color:#3fb950; font-weight:bold;">Exportar todas las alertas</span>".
-
-  El archivo contendrá para cada alerta:
-  - <span style="color:#7ee787;">Policy ID</span>: ID de la política.
-  - <span style="color:#7ee787;">Policy</span>: Nombre de la política.
-  - <span style="color:#7ee787;">ID</span>: ID de la alerta.
-  - <span style="color:#7ee787;">NombreAlerta</span>: Nombre de la alerta.
-  - <span style="color:#7ee787;">Descripción</span>: Contexto de la alerta.
-  - <span style="color:#3fb950;">Habilitada</span>: Estado.
-  - <span style="color:#7ee787;">Tipo</span>: Tipo.
-  - <span style="color:#7ee787;">Runbook</span>: Referencia.
-  - <span style="color:#7ee787;">NRQL</span>: Consulta.
-  - <span style="color:#7ee787;">Condición</span>: Umbrales.
-  - <span style="color:#7ee787;">GuidEntidad</span>: GUID.
-  - <span style="color:#7ee787;">NombreEntidad</span>: Nombre.
-  - <span style="color:#7ee787;">TipoEntidad</span>: Tipo.
-
-  Si no hay alertas configuradas, se mostrará un aviso en pantalla.
-    </code>  </pre>
-
-
-        <button id="exportAllBtn">Exportar todas las alertas</button>
-        <div id="statusAll"></div>
-      </div>
-
-
-      <div id="tab-entities" class="tab-content">
-
-        <pre> <code>
-  // <span style="color:#3fb950; font-weight:bold;">Listado de entidades:</span>
-
-  Este panel permite extraer todas las entidades del sistema 
-  e identificar su tipo.
-
-  Haz clic en "<span style="color:#3fb950; font-weight:bold;">Exportar todas las entidades</span>" 
-  para generar un reporte en Excel.
-
-  El archivo contendrá:
-  - <span style="color:#7ee787;">Nombre</span>: Nombre de la entidad.
-  - <span style="color:#7ee787;">Tipo</span>: Tipo de entidad (APPLICATION, HOST, BROWSER, etc).
-  - <span style="color:#7ee787;">Tiene Alertas</span>: Sí/No.
-  - <span style="color:#7ee787;">Alertas Vinculadas</span>: Nombres de las alertas.
-  - <span style="color:#7ee787;">GUID</span>: Identificador único de New Relic.
-    </code>  </pre>
-
-
-        <div class="entity-config-container">
+        <div class="entity-config-container" style="grid-template-columns: 1fr; margin-top: 15px;">
           <div class="config-section">
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <h3 style="color:#3fb950; margin: 0;">1. Tipos de Entidad</h3>
-              <div style="font-size: 0.8em;">
-                <a href="#" onclick="toggleChecks('entityTypeSelectors', true); return false;"
-                  style="color: #58a6ff; text-decoration: none;">Todos</a> |
-                <a href="#" onclick="toggleChecks('entityTypeSelectors', false); return false;"
-                  style="color: #58a6ff; text-decoration: none;">Ninguno</a>
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="color:#f0f6fc; margin: 0;">Campos a Exportar</h3>
+              <div style="display: flex; gap: 8px;">
+                <a href="#" class="control-pill"
+                  onclick="toggleChecks('policyFieldSelectors', true); return false;">Todos</a>
+                <a href="#" class="control-pill"
+                  onclick="toggleChecks('policyFieldSelectors', false); return false;">Ninguno</a>
               </div>
             </div>
-            <div class="checkbox-group" id="entityTypeSelectors">
-              <label><input type="checkbox" value="APM Service" checked> APM Services</label>
-              <label><input type="checkbox" value="Browser Application" checked> Browser Apps</label>
-              <label><input type="checkbox" value="Mobile Application" checked> Mobile Apps</label>
-              <label><input type="checkbox" value="HOST" checked> Servers (Hosts)</label>
-              <label><input type="checkbox" value="Synthetic Monitor" checked> Synthetic Monitors</label>
-              <label><input type="checkbox" value="WORKLOAD" checked> Workloads</label>
-              <label><input type="checkbox" value="DASHBOARD" checked> Dashboards</label>
-              <label><input type="checkbox" value="KEY_TRANSACTION" checked> Key Transactions</label>
-              <label><input type="checkbox" value="VSPHERE_VM" checked> vSphere VMs</label>
-              <label><input type="checkbox" value="FIREWALL" checked> Firewalls</label>
-              <label><input type="checkbox" value="SWITCH" checked> Switches</label>
-              <label><input type="checkbox" value="TRAP_DEVICE" checked> SNMP Devices</label>
-            </div>
-          </div>
 
-          <div class="config-section">
-            <h3 style="color:#3fb950; margin-bottom: 15px;">2. Selecciona Campos del Excel</h3>
-            <div class="checkbox-group" id="fieldSelectors">
-              <label><input type="checkbox" value="Nombre" checked> Nombre</label>
-              <label><input type="checkbox" value="Tipo" checked> Tipo</label>
-              <label><input type="checkbox" value="TieneAlertas" checked> Tiene Alertas</label>
-              <label><input type="checkbox" value="AlertasVinculadas" checked> Alertas Vinculadas</label>
-              <label><input type="checkbox" value="GUID" checked> GUID</label>
+            <div class="checkbox-group" id="policyFieldSelectors">
+              <label><input type="checkbox" value="PolicyID" checked> <span>Policy ID</span></label>
+              <label><input type="checkbox" value="Policy" checked> <span>Nombre Política</span></label>
+              <label><input type="checkbox" value="ID" checked> <span>ID Alerta</span></label>
+              <label><input type="checkbox" value="NombreAlerta" checked> <span>Nombre Alerta</span></label>
+              <label><input type="checkbox" value="Descripción" checked> <span>Descripción</span></label>
+              <label><input type="checkbox" value="Habilitada" checked> <span>Habilitada</span></label>
+              <label><input type="checkbox" value="Tipo" checked> <span>Tipo</span></label>
+              <label><input type="checkbox" value="Runbook" checked> <span>Runbook</span></label>
+              <label><input type="checkbox" value="NRQL" checked> <span>NRQL</span></label>
+              <label><input type="checkbox" value="Condición" checked> <span>Condición</span></label>
+              <label><input type="checkbox" value="GuidEntidad" checked> <span>GUID Entidad</span></label>
+              <label><input type="checkbox" value="NombreEntidad" checked> <span>Nombre Entidad</span></label>
+              <label><input type="checkbox" value="TipoEntidad" checked> <span>Tipo Entidad</span></label>
             </div>
           </div>
         </div>
 
-        <button id="exportEntitiesBtn" style="margin-top: 20px;">Generar y Exportar Excel</button>
-        <div id="statusEntities"></div>
+        <input type="number" id="policyId" placeholder="Ingrese Policy ID">
+        <button id="exportBtn" class="btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Exportar alertas
+        </button>
+        <div id="status" class="status-container"></div>
+      </div>
+
+
+      <div id="tab-example" class="tab-content">
+        <div class="info-banner">
+          <strong>Configuración de Alertas:</strong> Selecciona los campos que deseas incluir en el reporte global de
+          alertas. Se extraerán todas las condiciones NRQL configuradas en la cuenta.
+        </div>
+
+        <div class="entity-config-container" style="grid-template-columns: 1fr;">
+          <div class="config-section">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="color:#f0f6fc; margin: 0;">Campos a Exportar</h3>
+              <div style="display: flex; gap: 8px;">
+                <a href="#" class="control-pill"
+                  onclick="toggleChecks('alertFieldSelectors', true); return false;">Todos</a>
+                <a href="#" class="control-pill"
+                  onclick="toggleChecks('alertFieldSelectors', false); return false;">Ninguno</a>
+              </div>
+            </div>
+
+            <div class="checkbox-group" id="alertFieldSelectors">
+              <label><input type="checkbox" value="PolicyID" checked> <span>Policy ID</span></label>
+              <label><input type="checkbox" value="Policy" checked> <span>Nombre Política</span></label>
+              <label><input type="checkbox" value="ID" checked> <span>ID Alerta</span></label>
+              <label><input type="checkbox" value="NombreAlerta" checked> <span>Nombre Alerta</span></label>
+              <label><input type="checkbox" value="Descripción" checked> <span>Descripción</span></label>
+              <label><input type="checkbox" value="Habilitada" checked> <span>Habilitada</span></label>
+              <label><input type="checkbox" value="Tipo" checked> <span>Tipo</span></label>
+              <label><input type="checkbox" value="Runbook" checked> <span>Runbook</span></label>
+              <label><input type="checkbox" value="NRQL" checked> <span>NRQL</span></label>
+              <label><input type="checkbox" value="Condición" checked> <span>Condición</span></label>
+              <label><input type="checkbox" value="GuidEntidad" checked> <span>GUID Entidad</span></label>
+              <label><input type="checkbox" value="NombreEntidad" checked> <span>Nombre Entidad</span></label>
+              <label><input type="checkbox" value="TipoEntidad" checked> <span>Tipo Entidad</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-container" style="margin-top: 20px;">
+          <button id="exportAllBtn" class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Exportar Todas las Alertas
+          </button>
+          <div id="statusAll" style="margin-left: 15px;"></div>
+        </div>
+      </div>
+
+
+      <div id="tab-entities" class="tab-content">
+        <div class="info-banner">
+          <strong>Configuración del Reporte:</strong> Selecciona los tipos de entidades que deseas incluir y los campos
+          que se mostrarán en las columnas del archivo Excel. El reporte se generará en tiempo real cruzando los datos
+          con las alertas configuradas.
+        </div>
+
+        <div class="entity-config-container">
+          <!-- Columna 1: Tipos de Entidad -->
+          <div class="config-section">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="color:#f0f6fc; margin: 0;">Entidades a Incluir</h3>
+              <div style="display: flex; gap: 8px;">
+                <a href="#" class="control-pill"
+                  onclick="toggleChecks('entityTypeSelectors', true); return false;">Todos</a>
+                <a href="#" class="control-pill"
+                  onclick="toggleChecks('entityTypeSelectors', false); return false;">Ninguno</a>
+              </div>
+            </div>
+
+            <div class="checkbox-group" id="entityTypeSelectors">
+              <label><input type="checkbox" value="APM Service" checked> <span>APM Services</span></label>
+              <label><input type="checkbox" value="Browser Application" checked> <span>Browser Apps</span></label>
+              <label><input type="checkbox" value="Mobile Application" checked> <span>Mobile Apps</span></label>
+              <label><input type="checkbox" value="HOST" checked> <span>Servers (Hosts)</span></label>
+              <label><input type="checkbox" value="Synthetic Monitor" checked> <span>Synthetics</span></label>
+              <label><input type="checkbox" value="WORKLOAD" checked> <span>Workloads</span></label>
+              <label><input type="checkbox" value="DASHBOARD" checked> <span>Dashboards</span></label>
+              <label><input type="checkbox" value="KEY_TRANSACTION" checked> <span>Key Transactions</span></label>
+              <label><input type="checkbox" value="VSPHERE_VM" checked> <span>vSphere VMs</span></label>
+              <label><input type="checkbox" value="FIREWALL" checked> <span>Firewalls</span></label>
+              <label><input type="checkbox" value="SWITCH" checked> <span>Switches</span></label>
+              <label><input type="checkbox" value="TRAP_DEVICE" checked> <span>SNMP Devices</span></label>
+            </div>
+          </div>
+
+          <!-- Columna 2: Campos del Excel -->
+          <div class="config-section" style="border-left: 1px solid rgba(255,255,255,0.05); padding-left: 25px;">
+            <h3 style="color: #f0f6fc;">Campos del Excel</h3>
+            <div class="checkbox-group" id="fieldSelectors" style="grid-template-columns: 1fr;">
+              <label><input type="checkbox" value="Nombre" checked> <span>Nombre</span></label>
+              <label><input type="checkbox" value="Tipo" checked> <span>Tipo</span></label>
+              <label><input type="checkbox" value="TieneAlertas" checked> <span>Tiene Alertas</span></label>
+              <label><input type="checkbox" value="AlertasVinculadas" checked> <span>Alertas Vinculadas</span></label>
+              <label><input type="checkbox" value="GUID" checked> <span>GUID</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-container" style="margin-top: 20px;">
+          <button id="exportEntitiesBtn" class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Generar Reporte Excel
+          </button>
+          <div id="statusEntities" style="margin-left: 15px;"></div>
+        </div>
       </div>
 
 
@@ -287,13 +423,39 @@
       el.innerHTML = `<pre><code>// <span style="color:${colors[type]}; font-weight:bold;">${msg}</span></code></pre>`;
     }
 
+    // Helper para mapear alertas a filas según selección
+    function mapAlertsToSelectedFields(alerts, selectedFields) {
+      return alerts.map(c => {
+        const row = {};
+        if (selectedFields.includes("PolicyID")) row["Policy ID"] = c.policyId || "";
+        if (selectedFields.includes("Policy")) row["Nombre Política"] = c.policyName || "";
+        if (selectedFields.includes("ID")) row["ID Alerta"] = c.id;
+        if (selectedFields.includes("NombreAlerta")) row["Nombre Alerta"] = c.name;
+        if (selectedFields.includes("Descripción")) row["Descripción"] = c.description || "";
+        if (selectedFields.includes("Habilitada")) row["Habilitada"] = c.enabled ? "Sí" : "No";
+        if (selectedFields.includes("Tipo")) row["Tipo"] = c.type;
+        if (selectedFields.includes("Runbook")) row["Runbook"] = c.runbookUrl || "No";
+        if (selectedFields.includes("NRQL")) row["NRQL"] = c.nrql?.query || "";
+        if (selectedFields.includes("Condición")) row["Condición"] = c.termsText || "";
+        if (selectedFields.includes("GuidEntidad")) row["GUID Entidad"] = c.realEntity?.guid || "";
+        if (selectedFields.includes("NombreEntidad")) row["Nombre Entidad"] = c.realEntity?.name || "";
+        if (selectedFields.includes("TipoEntidad")) row["Tipo Entidad"] = c.realEntity?.type || "";
+        return row;
+      });
+    }
+
     // 🔹 Exportar por Policy ID
     document.getElementById("exportBtn").addEventListener("click", async () => {
       const status = document.getElementById("status");
       const policyId = document.getElementById("policyId").value.trim();
+      const selectedFields = Array.from(document.querySelectorAll("#policyFieldSelectors input:checked")).map(i => i.value);
 
       if (!policyId) {
         setStatus(status, "❌ Debes ingresar una Policy ID", "error");
+        return;
+      }
+      if (selectedFields.length === 0) {
+        setStatus(status, "⚠️ Selecciona al menos un campo", "warning");
         return;
       }
 
@@ -306,19 +468,32 @@
           return;
         }
 
-        const count = exportToExcel(alerts, "alerts.xlsx");
-        setStatus(status, `✅ Exportadas ${count} alertas a alerts.xlsx`, "success");
+        const rows = mapAlertsToSelectedFields(alerts, selectedFields);
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Alertas Policy");
+        XLSX.writeFile(workbook, `alerts_policy_${policyId}.xlsx`);
+
+        setStatus(status, `✅ Exportadas ${alerts.length} alertas a alerts_policy_${policyId}.xlsx`, "success");
       } catch (err) {
         console.error(err);
-        setStatus(status, "❌ Error al exportar alertas. Revisa la consola.", "error");
+        setStatus(status, "❌ Error al exportar alertas", "error");
       } finally {
         hideLoading();
       }
     });
 
-    // 🔹 Exportar todas las alertas
+    // 🔹 Exportar todas las alertas con CONFIGURACIÓN
     document.getElementById("exportAllBtn").addEventListener("click", async () => {
       const statusAll = document.getElementById("statusAll");
+
+      // Obtener campos seleccionados
+      const selectedFields = Array.from(document.querySelectorAll("#alertFieldSelectors input:checked")).map(i => i.value);
+
+      if (selectedFields.length === 0) {
+        setStatus(statusAll, "⚠️ Debes seleccionar al menos un campo para el Excel", "warning");
+        return;
+      }
 
       showLoading();
       try {
@@ -328,8 +503,14 @@
           setStatus(statusAll, "⚠️ No hay alertas configuradas", "warning");
           return;
         }
-        const count = exportToExcel(allAlerts, "all_alerts.xlsx");
-        setStatus(statusAll, `✅ Exportadas ${count} alertas a all_alerts.xlsx`, "success");
+
+        const rows = mapAlertsToSelectedFields(allAlerts, selectedFields);
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Todas las Alertas");
+        XLSX.writeFile(workbook, "all_alerts_custom.xlsx");
+
+        setStatus(statusAll, `✅ Exportadas ${allAlerts.length} alertas a all_alerts_custom.xlsx`, "success");
       } catch (err) {
         console.error(err);
         setStatus(statusAll, "❌ Error al exportar todas las alertas", "error");
