@@ -18,6 +18,7 @@
 </head>
 
 <body>
+  <canvas id="canvas"></canvas>
   <div class="container">
     <h1>Herramienta de Alertas New Relic</h1>
 
@@ -30,45 +31,44 @@
 
       <div id="tab-use" class="tab-content active">
 
-        <p style="color:#79c0ff; font-size:1rem; margin-bottom:15px;">
+        <p style="color:var(--primary-color); margin-bottom:12px;">
           Ingresa un <strong>Policy ID</strong> para obtener información detallada de las alertas asociadas a esa
           política. Podrás exportarlas directamente a un archivo Excel.
         </p>
 
 
         <pre><code>
-  // <span style="color:#2ea043; font-weight:bold;">Cómo usar la aplicación:</span>
+  // <span style="color:#3fb950; font-weight:bold;">Cómo usar la aplicación:</span>
 
-  <span style="color:#58a6ff;">1.</span> Escribe el <span style="color:#d2a8ff;">Policy ID</span> en el campo de texto.  
-     (Ejemplo: <span style="color:#ffa657;">1234567</span>)
+  <span style="color:var(--primary-color);">1.</span> Escribe el <span style="color:#7ee787;">Policy ID</span> en el campo de texto.  
+     (Ejemplo: <span style="color:#d29922;">1234567</span>)
 
-  <span style="color:#58a6ff;">2.</span> Haz clic en 
-     "<span style="color:#2ea043; font-weight:bold;">Exportar alertas</span>".
+  <span style="color:var(--primary-color);">2.</span> Haz clic en 
+     "<span style="color:#3fb950; font-weight:bold;">Exportar alertas</span>".
 
-  <span style="color:#58a6ff;">3.</span> La app consultará la 
-     <span style="color:#79c0ff;">API de New Relic</span> y, si existen alertas,  
-     descargará un archivo "<span style="color:#ff7b72;">alerts.xlsx</span>".
+  <span style="color:var(--primary-color);">3.</span> La app consultará la 
+     <span style="color:#7ee787;">API de New Relic</span> y, si existen alertas,  
+     descargará un archivo "<span style="color:#f85149;">alerts.xlsx</span>".
 
-  <span style="color:#58a6ff;">4.</span> El archivo Excel contendrá:  
-  - <span style="color:#d2a8ff;">Policy ID</span>: Identificador de la política a la que pertenece la alerta.
-  - <span style="color:#d2a8ff;">Policy</span>: Nombre de la política asociada.
-  - <span style="color:#d2a8ff;">ID</span>: Identificador único de la alerta.
-  - <span style="color:#d2a8ff;">NombreAlerta</span>: Nombre descriptivo de la alerta.
-  - <span style="color:#d2a8ff;">Descripción</span>: Detalles adicionales o contexto de la alerta.
-  - <span style="color:#2ea043;">Habilitada</span>: Indica si la alerta está activa o deshabilitada.
-  - <span style="color:#d2a8ff;">Tipo</span>: Tipo de condición (por ejemplo, NRQL, infraestructura, etc.).
-  - <span style="color:#d2a8ff;">Runbook</span>: URL o referencia al runbook asociado para respuesta ante la alerta.
-  - <span style="color:#d2a8ff;">NRQL</span>: Consulta NRQL que define la condición de alerta.
-  - <span style="color:#d2a8ff;">Condición</span>: Descripción legible de los umbrales, operadores, 
-  prioridad, duración y ocurrencias.
-  - <span style="color:#d2a8ff;">GuidEntidad</span>: GUID de la entidad a la que aplica la alerta.
-  - <span style="color:#d2a8ff;">NombreEntidad</span>: Nombre de la entidad afectada.
-  - <span style="color:#d2a8ff;">TipoEntidad</span>: Tipo de la entidad (por ejemplo, Aplicación, Servidor, etc.).
+  <span style="color:var(--primary-color);">4.</span> El archivo Excel contendrá:  
+  - <span style="color:#7ee787;">Policy ID</span>: ID de la política.
+  - <span style="color:#7ee787;">Policy</span>: Nombre de la política.
+  - <span style="color:#7ee787;">ID</span>: ID de la alerta.
+  - <span style="color:#7ee787;">NombreAlerta</span>: Nombre de la alerta.
+  - <span style="color:#7ee787;">Descripción</span>: Contexto de la alerta.
+  - <span style="color:#3fb950;">Habilitada</span>: Estado (Activa/Inactiva).
+  - <span style="color:#7ee787;">Tipo</span>: Tipo de condición.
+  - <span style="color:#7ee787;">Runbook</span>: Referencia del runbook.
+  - <span style="color:#7ee787;">NRQL</span>: Consulta NRQL.
+  - <span style="color:#7ee787;">Condición</span>: Umbrales y duración.
+  - <span style="color:#7ee787;">GuidEntidad</span>: GUID de la entidad.
+  - <span style="color:#7ee787;">NombreEntidad</span>: Nombre de la entidad.
+  - <span style="color:#7ee787;">TipoEntidad</span>: Tipo de entidad.
 
 
-  <span style="color:#58a6ff;">5.</span> Si la <span style="color:#d2a8ff;">Policy ID</span> no tiene alertas asociadas,  
-     se mostrará un <span style="color:#ff7b72;">aviso en pantalla</span>  
-     y no se descargará ningún archivo.
+  <span style="color:var(--primary-color);">5.</span> Si el <span style="color:#7ee787;">Policy ID</span> no tiene alertas,  
+     se mostrará un <span style="color:#f85149;">aviso</span>  
+     y no se descargará nada.
     </code></pre>
 
         <input type="number" id="policyId" placeholder="Ingrese Policy ID">
@@ -80,27 +80,26 @@
       <div id="tab-example" class="tab-content">
 
         <pre> <code>
-  // <span style="color:#2ea043; font-weight:bold;">Resumen de alertas configuradas:</span>
+  // <span style="color:#3fb950; font-weight:bold;">Resumen de alertas configuradas:</span>
 
   Este panel permite exportar todas las alertas existentes en el sistema
   a un archivo Excel haciendo clic en 
-  "<span style="color:#2ea043; font-weight:bold;">Exportar todas las alertas</span>".
+  "<span style="color:#3fb950; font-weight:bold;">Exportar todas las alertas</span>".
 
   El archivo contendrá para cada alerta:
-  - <span style="color:#d2a8ff;">Policy ID</span>: Identificador de la política a la que pertenece la alerta.
-  - <span style="color:#d2a8ff;">Policy</span>: Nombre de la política asociada.
-  - <span style="color:#d2a8ff;">ID</span>: Identificador único de la alerta.
-  - <span style="color:#d2a8ff;">NombreAlerta</span>: Nombre descriptivo de la alerta.
-  - <span style="color:#d2a8ff;">Descripción</span>: Detalles adicionales o contexto de la alerta.
-  - <span style="color:#2ea043;">Habilitada</span>: Indica si la alerta está activa o deshabilitada.
-  - <span style="color:#d2a8ff;">Tipo</span>: Tipo de condición (por ejemplo, NRQL, infraestructura, etc.).
-  - <span style="color:#d2a8ff;">Runbook</span>: URL o referencia al runbook asociado para respuesta ante la alerta.
-  - <span style="color:#d2a8ff;">NRQL</span>: Consulta NRQL que define la condición de alerta.
-  - <span style="color:#d2a8ff;">Condición</span>: Descripción legible de los umbrales, operadores, 
-  prioridad, duración y ocurrencias.
-  - <span style="color:#d2a8ff;">GuidEntidad</span>: GUID de la entidad a la que aplica la alerta.
-  - <span style="color:#d2a8ff;">NombreEntidad</span>: Nombre de la entidad afectada.
-  - <span style="color:#d2a8ff;">TipoEntidad</span>: Tipo de la entidad (por ejemplo, Aplicación, Servidor, etc.).
+  - <span style="color:#7ee787;">Policy ID</span>: ID de la política.
+  - <span style="color:#7ee787;">Policy</span>: Nombre de la política.
+  - <span style="color:#7ee787;">ID</span>: ID de la alerta.
+  - <span style="color:#7ee787;">NombreAlerta</span>: Nombre de la alerta.
+  - <span style="color:#7ee787;">Descripción</span>: Contexto de la alerta.
+  - <span style="color:#3fb950;">Habilitada</span>: Estado.
+  - <span style="color:#7ee787;">Tipo</span>: Tipo.
+  - <span style="color:#7ee787;">Runbook</span>: Referencia.
+  - <span style="color:#7ee787;">NRQL</span>: Consulta.
+  - <span style="color:#7ee787;">Condición</span>: Umbrales.
+  - <span style="color:#7ee787;">GuidEntidad</span>: GUID.
+  - <span style="color:#7ee787;">NombreEntidad</span>: Nombre.
+  - <span style="color:#7ee787;">TipoEntidad</span>: Tipo.
 
   Si no hay alertas configuradas, se mostrará un aviso en pantalla.
     </code>  </pre>
@@ -145,23 +144,23 @@
     }
 
     // 🔹 Transformar condiciones en filas de Excel
-function mapAlertsToRows(conditions) {
-  return conditions.map(c => ({
-    PolicyID: c.policyId || "",
-    Policy: c.policyName || "",
-    ID: c.id,
-    NombreAlerta: c.name,
-    Descripción: c.description || "",
-    Habilitada: c.enabled ? "Sí" : "No",
-    Tipo: c.type,
-    Runbook: c.runbookUrl || "No",
-    NRQL: c.nrql?.query || "",
-    Condición: c.termsText || "",
-    GuidEntidad: c.realEntity?.guid || "",
-    NombreEntidad: c.realEntity?.name || "",
-    TipoEntidad: c.realEntity?.type || ""
-  }));
-}
+    function mapAlertsToRows(conditions) {
+      return conditions.map(c => ({
+        PolicyID: c.policyId || "",
+        Policy: c.policyName || "",
+        ID: c.id,
+        NombreAlerta: c.name,
+        Descripción: c.description || "",
+        Habilitada: c.enabled ? "Sí" : "No",
+        Tipo: c.type,
+        Runbook: c.runbookUrl || "No",
+        NRQL: c.nrql?.query || "",
+        Condición: c.termsText || "",
+        GuidEntidad: c.realEntity?.guid || "",
+        NombreEntidad: c.realEntity?.name || "",
+        TipoEntidad: c.realEntity?.type || ""
+      }));
+    }
 
 
     // 🔹 Función genérica para exportar a Excel
@@ -240,6 +239,7 @@ function mapAlertsToRows(conditions) {
 
   <script src="assets/js/pantalla-carga.js"></script>
   <script src="assets/js/tab.js"></script>
+  <script src="assets/js/particles.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 </body>
