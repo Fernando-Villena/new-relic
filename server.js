@@ -340,40 +340,39 @@ async function getAllEntities() {
 
   // Consultar cada criterio por separado
   for (const query of searchQueries) {
-    const q = `{
-      actor {
-        entitySearch(
-          query: "${query}"
-        ) {
-          results {
-            entities {
-              guid
-              name
-              type
-              domain
-            }
-          }
+    let cursor = null;
+    let hasMore = true;
+    let page = 1;
+
+    while (hasMore) {
+      // Si hay cursor, NO enviamos query (así funciona NerdGraph)
+      const q = cursor
+        ? `{ actor { entitySearch(cursor: "${cursor}") { results { entities { guid name type domain } nextCursor } } } }`
+        : `{ actor { entitySearch(query: "${query}") { results { entities { guid name type domain } nextCursor } } } }`;
+
+      try {
+        const resp = await graphqlQuery(q);
+        if (resp?.errors) {
+          console.error(`❌ Error en ${query} [pág ${page}]:`, JSON.stringify(resp.errors));
+          break;
         }
+
+        const res = resp?.data?.actor?.entitySearch?.results;
+        if (!res) break;
+
+        if (res.entities && res.entities.length > 0) {
+          allEntities = allEntities.concat(res.entities);
+          console.log(`✓ [${query}] Pág ${page}: ${res.entities.length} entidades.`);
+        }
+
+        cursor = res.nextCursor;
+        hasMore = !!cursor;
+        page++;
+        if (page > 10) break; // Límite de seguridad
+      } catch (err) {
+        console.error(`Error en paginación de ${query}:`, err);
+        break;
       }
-    }`;
-
-    console.log(`📄 Consultando criterio: ${query}...`);
-
-    try {
-      const resp = await graphqlQuery(q);
-
-      if (resp?.errors) {
-        console.error(`❌ Error para criterio ${query}:`, JSON.stringify(resp.errors));
-        continue;
-      }
-
-      const entities = resp?.data?.actor?.entitySearch?.results?.entities;
-      if (entities && entities.length > 0) {
-        console.log(`✓ Encontradas ${entities.length} entidades para: ${query}`);
-        allEntities = allEntities.concat(entities);
-      }
-    } catch (err) {
-      console.error(`Error consultando criterio ${query}:`, err);
     }
   }
 
@@ -383,9 +382,19 @@ async function getAllEntities() {
   // Mostrar resumen por tipo
   const typeCount = {};
   allEntities.forEach(e => {
-    typeCount[e.type] = (typeCount[e.type] || 0) + 1;
+    // Usar la misma lógica de clasificación que en el endpoint
+    let friendlyType = e.type;
+    if (e.type === 'APPLICATION' || e.type === 'BROWSER_APPLICATION') {
+      if (e.domain === 'APM') friendlyType = 'APM Service';
+      else if (e.domain === 'BROWSER') friendlyType = 'Browser Application';
+      else if (e.domain === 'MOBILE') friendlyType = 'Mobile Application';
+    } else if (e.type === 'MONITOR') {
+      friendlyType = 'Synthetic Monitor';
+    }
+    typeCount[friendlyType] = (typeCount[friendlyType] || 0) + 1;
   });
   console.log("📊 Resumen por tipo:", typeCount);
+
 
   return allEntities;
 }

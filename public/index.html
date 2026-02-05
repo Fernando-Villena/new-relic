@@ -13,7 +13,39 @@
   <link rel="stylesheet" href="assets/css/status.css">
   <link rel="stylesheet" href="assets/css/styles.css">
   <style>
+    .entity-config-container {
+      display: flex;
+      gap: 30px;
+      margin: 20px 0;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid rgba(63, 185, 80, 0.2);
+    }
 
+    .config-section {
+      flex: 1;
+    }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.9em;
+      color: #c9d1d9;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      cursor: pointer;
+      accent-color: #3fb950;
+    }
   </style>
 </head>
 
@@ -131,7 +163,46 @@
     </code>  </pre>
 
 
-        <button id="exportEntitiesBtn">Exportar todas las entidades</button>
+        <div class="entity-config-container">
+          <div class="config-section">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h3 style="color:#3fb950; margin: 0;">1. Tipos de Entidad</h3>
+              <div style="font-size: 0.8em;">
+                <a href="#" onclick="toggleChecks('entityTypeSelectors', true); return false;"
+                  style="color: #58a6ff; text-decoration: none;">Todos</a> |
+                <a href="#" onclick="toggleChecks('entityTypeSelectors', false); return false;"
+                  style="color: #58a6ff; text-decoration: none;">Ninguno</a>
+              </div>
+            </div>
+            <div class="checkbox-group" id="entityTypeSelectors">
+              <label><input type="checkbox" value="APM Service" checked> APM Services</label>
+              <label><input type="checkbox" value="Browser Application" checked> Browser Apps</label>
+              <label><input type="checkbox" value="Mobile Application" checked> Mobile Apps</label>
+              <label><input type="checkbox" value="HOST" checked> Servers (Hosts)</label>
+              <label><input type="checkbox" value="Synthetic Monitor" checked> Synthetic Monitors</label>
+              <label><input type="checkbox" value="WORKLOAD" checked> Workloads</label>
+              <label><input type="checkbox" value="DASHBOARD" checked> Dashboards</label>
+              <label><input type="checkbox" value="KEY_TRANSACTION" checked> Key Transactions</label>
+              <label><input type="checkbox" value="VSPHERE_VM" checked> vSphere VMs</label>
+              <label><input type="checkbox" value="FIREWALL" checked> Firewalls</label>
+              <label><input type="checkbox" value="SWITCH" checked> Switches</label>
+              <label><input type="checkbox" value="TRAP_DEVICE" checked> SNMP Devices</label>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <h3 style="color:#3fb950; margin-bottom: 15px;">2. Selecciona Campos del Excel</h3>
+            <div class="checkbox-group" id="fieldSelectors">
+              <label><input type="checkbox" value="Nombre" checked> Nombre</label>
+              <label><input type="checkbox" value="Tipo" checked> Tipo</label>
+              <label><input type="checkbox" value="TieneAlertas" checked> Tiene Alertas</label>
+              <label><input type="checkbox" value="AlertasVinculadas" checked> Alertas Vinculadas</label>
+              <label><input type="checkbox" value="GUID" checked> GUID</label>
+            </div>
+          </div>
+        </div>
+
+        <button id="exportEntitiesBtn" style="margin-top: 20px;">Generar y Exportar Excel</button>
         <div id="statusEntities"></div>
       </div>
 
@@ -199,6 +270,11 @@
       return rows.length;
     }
 
+    // Auxiliar para seleccionar/deseleccionar todo
+    window.toggleChecks = (containerId, checked) => {
+      document.querySelectorAll(`#${containerId} input[type="checkbox"]`).forEach(i => i.checked = checked);
+    };
+
     // 🔹 Mostrar mensaje con estilo consola
     function setStatus(el, msg, type = "info") {
       const colors = {
@@ -262,32 +338,63 @@
       }
     });
 
-    // 🔹 Exportar todas las entidades
+    // 🔹 Exportar todas las entidades con CONFIGURACIÓN
     document.getElementById("exportEntitiesBtn").addEventListener("click", async () => {
       const statusEntities = document.getElementById("statusEntities");
+
+      // 1. Obtener selecciones del usuario
+      const selectedTypes = Array.from(document.querySelectorAll("#entityTypeSelectors input:checked")).map(i => i.value);
+      const selectedFields = Array.from(document.querySelectorAll("#fieldSelectors input:checked")).map(i => i.value);
+
+      if (selectedTypes.length === 0) {
+        setStatus(statusEntities, "⚠️ Debes seleccionar al menos un tipo de entidad", "warning");
+        return;
+      }
+      if (selectedFields.length === 0) {
+        setStatus(statusEntities, "⚠️ Debes seleccionar al menos un campo para el Excel", "warning");
+        return;
+      }
+
       showLoading();
       try {
-        const entities = await fetchAlerts("entities");
+        // Fetch de todas las entidades (el filtro se hace en cliente)
+        const allEntities = await fetchAlerts("entities");
 
-        if (entities.length === 0) {
+        if (allEntities.length === 0) {
           setStatus(statusEntities, "⚠️ No hay entidades encontradas", "warning");
           return;
         }
 
-        const rows = entities.map(e => ({
-          Nombre: e.name,
-          Tipo: e.type,
-          TieneAlertas: e.hasAlerts ? "Sí" : "No",
-          AlertasVinculadas: e.alertNames.join(", "),
-          GUID: e.guid
-        }));
+        // 2. Filtrar por tipo seleccionado
+        // Nota: Mapeamos algunos tipos que vienen del backend
+        const filteredEntities = allEntities.filter(e => {
+          // Si el tipo es mas detallado (como 'APM Service'), lo comparamos directo
+          // Si es genérico (como 'FIREWALL'), lo comparamos con lo que el usuario eligió
+          return selectedTypes.includes(e.type);
+        });
+
+        if (filteredEntities.length === 0) {
+          setStatus(statusEntities, "⚠️ No hay entidades que coincidan con los tipos seleccionados", "warning");
+          return;
+        }
+
+        // 3. Mapear solo los campos seleccionados
+        const rows = filteredEntities.map(e => {
+          const row = {};
+          if (selectedFields.includes("Nombre")) row["Nombre"] = e.name;
+          if (selectedFields.includes("Tipo")) row["Tipo"] = e.type;
+          if (selectedFields.includes("TieneAlertas")) row["Tiene Alertas"] = e.hasAlerts ? "Sí" : "No";
+          if (selectedFields.includes("AlertasVinculadas")) row["Alertas Vinculadas"] = e.alertNames.join(", ");
+          if (selectedFields.includes("GUID")) row["GUID"] = e.guid;
+          return row;
+        });
 
         const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.json_to_sheet(rows);
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Entidades");
-        XLSX.writeFile(workbook, "entities_report.xlsx");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Entidades_Filtradas");
+        XLSX.writeFile(workbook, "entities_custom_report.xlsx");
 
-        setStatus(statusEntities, `✅ Exportadas ${entities.length} entidades a entities_report.xlsx`, "success");
+        setStatus(statusEntities, `✅ Exportadas ${filteredEntities.length} entidades a entities_custom_report.xlsx`, "success");
       } catch (err) {
         console.error(err);
         setStatus(statusEntities, "❌ Error al exportar entidades", "error");
