@@ -312,5 +312,116 @@ app.post("/alerts", async (req, res) => {
   }
 });
 
+// --- NUEVO APARTADO: ENTIDADES Y SUS ALERTAS ---
+
+async function getAllEntities() {
+  let allEntities = [];
+
+  console.log(`Iniciando getAllEntities. ACCOUNT_ID: ${ACCOUNT_ID}`);
+
+  // Lista de tipos de entidades que queremos obtener
+  const entityTypes = [
+    'APPLICATION',
+    'HOST',
+    'BROWSER_APPLICATION',
+    'MOBILE_APPLICATION',
+    'SYNTHETIC_MONITOR',
+    'WORKLOAD',
+    'DASHBOARD',
+    'KEY_TRANSACTION',
+    'SERVICE_LEVEL',
+    'APACHE_SERVER',
+    'MSSQL_INSTANCE',
+    'MYSQL_NODE',
+    'ORACLEDB_INSTANCE',
+    'VSPHERE_CLUSTER',
+    'VSPHERE_DATACENTER',
+    'VSPHERE_DATASTORE',
+    'VSPHERE_HOST',
+    'VSPHERE_VM',
+    'WINDOWS_SERVICE',
+    'FIREWALL',
+    'ROUTER',
+    'SWITCH',
+    'TRAP_DEVICE',
+    'SECURE_CREDENTIAL',
+    'PRIVATE_LOCATION'
+  ];
+
+  // Consultar cada tipo por separado
+  for (const entityType of entityTypes) {
+    const q = `{
+      actor {
+        entitySearch(
+          query: "type = '${entityType}'"
+        ) {
+          results {
+            entities {
+              guid
+              name
+              type
+              domain
+            }
+          }
+        }
+      }
+    }`;
+
+    console.log(`📄 Consultando entidades de tipo: ${entityType}...`);
+
+    try {
+      const resp = await graphqlQuery(q);
+
+      if (resp?.errors) {
+        console.error(`❌ Error para tipo ${entityType}:`, JSON.stringify(resp.errors));
+        continue;
+      }
+
+      const entities = resp?.data?.actor?.entitySearch?.results?.entities;
+      if (entities && entities.length > 0) {
+        console.log(`✓ Encontradas ${entities.length} entidades de tipo ${entityType}`);
+        allEntities = allEntities.concat(entities);
+      }
+    } catch (err) {
+      console.error(`Error consultando tipo ${entityType}:`, err);
+    }
+  }
+
+  console.log(`\n🎯 Proceso getAllEntities finalizado.`);
+  console.log(`📊 Total de entidades obtenidas: ${allEntities.length}`);
+
+  // Mostrar resumen por tipo
+  const typeCount = {};
+  allEntities.forEach(e => {
+    typeCount[e.type] = (typeCount[e.type] || 0) + 1;
+  });
+  console.log("📊 Resumen por tipo:", typeCount);
+
+  return allEntities;
+}
+
+app.get("/entities", async (req, res) => {
+  try {
+    console.log("=== Iniciando endpoint /entities ===");
+
+    // Obtener todas las entidades
+    const entities = await getAllEntities();
+
+    console.log(`Total de entidades obtenidas: ${entities.length}`);
+
+    // Devolver solo las entidades con su información básica
+    const result = entities.map(ent => ({
+      name: ent.name,
+      type: ent.type,
+      guid: ent.guid
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error en endpoint /entities:", err);
+    res.status(500).json({ error: "Error al obtener entidades" });
+  }
+});
+
 
 app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));

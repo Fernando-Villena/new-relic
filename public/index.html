@@ -27,6 +27,7 @@
       <div class="tab-menu">
         <span class="tab active" onclick="showTab('tab-use')">Policy</span>
         <span class="tab" onclick="showTab('tab-example')">Alertas Configuradas</span>
+        <span class="tab" onclick="showTab('tab-entities')">Entidades</span>
       </div>
 
       <div id="tab-use" class="tab-content active">
@@ -107,6 +108,29 @@
 
         <button id="exportAllBtn">Exportar todas las alertas</button>
         <div id="statusAll"></div>
+      </div>
+
+
+      <div id="tab-entities" class="tab-content">
+
+        <pre> <code>
+  // <span style="color:#3fb950; font-weight:bold;">Listado de entidades:</span>
+
+  Este panel permite extraer todas las entidades del sistema 
+  e identificar su tipo.
+
+  Haz clic en "<span style="color:#3fb950; font-weight:bold;">Exportar todas las entidades</span>" 
+  para generar un reporte en Excel.
+
+  El archivo contendrá:
+  - <span style="color:#7ee787;">Nombre</span>: Nombre de la entidad.
+  - <span style="color:#7ee787;">Tipo</span>: Tipo de entidad (APPLICATION, HOST, BROWSER, etc).
+  - <span style="color:#7ee787;">GUID</span>: Identificador único de New Relic.
+    </code>  </pre>
+
+
+        <button id="exportEntitiesBtn">Exportar todas las entidades</button>
+        <div id="statusEntities"></div>
       </div>
 
 
@@ -231,6 +255,38 @@
       } catch (err) {
         console.error(err);
         setStatus(statusAll, "❌ Error al exportar todas las alertas", "error");
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // 🔹 Exportar todas las entidades
+    document.getElementById("exportEntitiesBtn").addEventListener("click", async () => {
+      const statusEntities = document.getElementById("statusEntities");
+      showLoading();
+      try {
+        const entities = await fetchAlerts("entities");
+
+        if (entities.length === 0) {
+          setStatus(statusEntities, "⚠️ No hay entidades encontradas", "warning");
+          return;
+        }
+
+        const rows = entities.map(e => ({
+          Nombre: e.name,
+          Tipo: e.type,
+          GUID: e.guid
+        }));
+
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Entidades");
+        XLSX.writeFile(workbook, "entities_report.xlsx");
+
+        setStatus(statusEntities, `✅ Exportadas ${entities.length} entidades a entities_report.xlsx`, "success");
+      } catch (err) {
+        console.error(err);
+        setStatus(statusEntities, "❌ Error al exportar entidades", "error");
       } finally {
         hideLoading();
       }
