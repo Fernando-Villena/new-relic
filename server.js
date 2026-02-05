@@ -402,24 +402,63 @@ async function getAllEntities() {
 
 app.get("/entities", async (req, res) => {
   try {
-    console.log("=== Iniciando endpoint /entities ===");
+    console.log("=== Iniciando endpoint /entities con cruce de alertas ===");
 
-    // Obtener todas las entidades
+    // 1. Obtener todas las alertas para saber qué entidades están alertadas
+    let allConditions = [];
+    let alertCursor = null;
+    do {
+      const q = `{
+        actor {
+          account(id: ${ACCOUNT_ID}) {
+            alerts {
+              nrqlConditionsSearch(cursor: ${alertCursor ? `"${alertCursor}"` : null}) {
+                nrqlConditions {
+                  name
+                  entity { guid }
+                  nrql { query }
+                }
+                nextCursor
+              }
+            }
+          }
+        }
+      }`;
+      const data = await graphqlQuery(q);
+      const result = data?.data?.actor?.account?.alerts?.nrqlConditionsSearch;
+      if (!result) break;
+      allConditions = allConditions.concat(result.nrqlConditions);
+      alertCursor = result.nextCursor;
+    } while (alertCursor);
+
+    // Mapear GUIDs alertados
+    const alertedEntitiesMap = {};
+    allConditions.forEach(cond => {
+      const guid = extractGuidFromNrql(cond.nrql?.query) || cond.entity?.guid;
+      if (guid) {
+        if (!alertedEntitiesMap[guid]) alertedEntitiesMap[guid] = [];
+        alertedEntitiesMap[guid].push(cond.name);
+      }
+    });
+
+    // 2. Obtener todas las entidades (usando la función que itera tipos)
     const entities = await getAllEntities();
 
     console.log(`Total de entidades obtenidas: ${entities.length}`);
 
-    // Devolver solo las entidades con su información básica
+    // 3. Cruzar datos
     const result = entities.map(ent => ({
       name: ent.name,
       type: ent.type,
-      guid: ent.guid
+      guid: ent.guid,
+      hasAlerts: !!alertedEntitiesMap[ent.guid],
+      alertNames: alertedEntitiesMap[ent.guid] || []
     }));
 
     res.json(result);
   } catch (err) {
     console.error("Error en endpoint /entities:", err);
-    res.status(500).json({ error: "Error al obtener entidades" });
+    res.status(500).json({ error: "Error al obtener entidades con alertas" });
   }
 });
 

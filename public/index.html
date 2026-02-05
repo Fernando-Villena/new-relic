@@ -125,6 +125,8 @@
   El archivo contendrá:
   - <span style="color:#7ee787;">Nombre</span>: Nombre de la entidad.
   - <span style="color:#7ee787;">Tipo</span>: Tipo de entidad (APPLICATION, HOST, BROWSER, etc).
+  - <span style="color:#7ee787;">Tiene Alertas</span>: Sí/No.
+  - <span style="color:#7ee787;">Alertas Vinculadas</span>: Nombres de las alertas.
   - <span style="color:#7ee787;">GUID</span>: Identificador único de New Relic.
     </code>  </pre>
 
@@ -275,6 +277,8 @@
         const rows = entities.map(e => ({
           Nombre: e.name,
           Tipo: e.type,
+          TieneAlertas: e.hasAlerts ? "Sí" : "No",
+          AlertasVinculadas: e.alertNames.join(", "),
           GUID: e.guid
         }));
 
