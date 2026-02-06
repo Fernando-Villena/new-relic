@@ -94,12 +94,16 @@ function formatTerm(term) {
   return parts.join(" ");
 }
 
-// Extrae GUID desde una query NRQL (si está presente)
-function extractGuidFromNrql(nrqlQuery) {
-  if (!nrqlQuery) return null;
-  const regex = /entity\.?guid\s*(?:IN\s*\(|=)\s*['"]([^'"]+)['"]/i;
-  const match = nrqlQuery.match(regex);
-  return match ? match[1] : null;
+// Extrae GUIDs desde una query NRQL
+function extractGuidsFromNrql(nrqlQuery) {
+  if (!nrqlQuery) return [];
+  const regex = /(?:entity\.?guid|guid|entityGuid)\s*(?:IN\s*\(|=)\s*['"]([^'"]+)['"]/gi;
+  const matches = [];
+  let match;
+  while ((match = regex.exec(nrqlQuery)) !== null) {
+    matches.push(match[1]);
+  }
+  return matches;
 }
 
 // Enriquecer condiciones: añade realEntity y termsText
@@ -110,7 +114,8 @@ async function enrichConditions(conditions) {
 
   return await Promise.all(
     conditions.map(cond => limit(async () => {
-      const guid = extractGuidFromNrql(cond.nrql?.query) || cond.entity?.guid || null;
+      const guids = extractGuidsFromNrql(cond.nrql?.query);
+      const guid = guids.length > 0 ? guids[0] : (cond.entity?.guid || null);
 
       // Fallback si getEntityByGuid falla
       let realEntity = {
@@ -433,11 +438,17 @@ app.get("/entities", async (req, res) => {
     // Mapear GUIDs alertados
     const alertedEntitiesMap = {};
     allConditions.forEach(cond => {
-      const guid = extractGuidFromNrql(cond.nrql?.query) || cond.entity?.guid;
-      if (guid) {
-        if (!alertedEntitiesMap[guid]) alertedEntitiesMap[guid] = [];
-        alertedEntitiesMap[guid].push(cond.name);
+      const guids = extractGuidsFromNrql(cond.nrql?.query);
+      if (cond.entity?.guid && !guids.includes(cond.entity.guid)) {
+        guids.push(cond.entity.guid);
       }
+
+      guids.forEach(guid => {
+        if (!alertedEntitiesMap[guid]) alertedEntitiesMap[guid] = [];
+        if (!alertedEntitiesMap[guid].includes(cond.name)) {
+          alertedEntitiesMap[guid].push(cond.name);
+        }
+      });
     });
 
     // 2. Obtener todas las entidades (usando la función que itera tipos)
@@ -457,12 +468,31 @@ app.get("/entities", async (req, res) => {
         friendlyType = 'Synthetic Monitor';
       }
 
+      // Buscar alertas por GUID
+      let matchedAlerts = alertedEntitiesMap[ent.guid] || [];
+
+      // Fallback: Buscar alertas por nombre en el NRQL o en el nombre de la condición
+      // Esto ayuda cuando los GUIDs en las alertas son antiguos o no coinciden exactamente
+      if (matchedAlerts.length === 0) {
+        const entNameLower = ent.name.toLowerCase();
+        allConditions.forEach(cond => {
+          const query = (cond.nrql?.query || "").toLowerCase();
+          const condName = (cond.name || "").toLowerCase();
+
+          if (query.includes(entNameLower) || condName.includes(entNameLower)) {
+            if (!matchedAlerts.includes(cond.name)) {
+              matchedAlerts.push(cond.name);
+            }
+          }
+        });
+      }
+
       return {
         name: ent.name,
         type: friendlyType,
         guid: ent.guid,
-        hasAlerts: !!alertedEntitiesMap[ent.guid],
-        alertNames: alertedEntitiesMap[ent.guid] || []
+        hasAlerts: matchedAlerts.length > 0,
+        alertNames: matchedAlerts
       };
     });
 

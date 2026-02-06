@@ -1,0 +1,18 @@
+Searching for entity: appwvcms01
+Entities found: [
+  {
+    "domain": "INFRA",
+    "guid": "MTA3NzE1MXxJTkZSQXxOQXwxNDQ0OTA2Mjc4OTU3NTIyNTU2",
+    "name": "appwvcms01",
+    "type": "HOST"
+  }
+]
+
+Searching for all alerts to test matching for: appwvcms01 (MTA3NzE1MXxJTkZSQXxOQXwxNDQ0OTA2Mjc4OTU3NTIyNTU2)
+Total conditions fetched: 3020
+[NAME match] Uso de Disco sobre umbrales para el Host appwvcms01
+[NAME match] Uso de memoria Elevados para el Host appwvcms01
+[NAME match] Desconexión para el host appwvcms01 durante 3 minutos
+[NAME match] Uso de CPU Elevados para el Host appwvcms01
+
+Found 4 matched alert conditions.
