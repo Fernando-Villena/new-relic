@@ -2,24 +2,24 @@
     .tab-menu {
       display: flex;
       justify-content: flex-start;
-      border-bottom: 1px solid #30363d;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .tab {
       padding: 10px 15px;
       cursor: pointer;
-      color: #8b949e;
+      color: var(--text-secondary);
       border-bottom: 2px solid transparent;
       transition: all 0.2s ease-in-out;
     }
 
     .tab:hover {
-      color: #e6edf3;
+      color: var(--text-primary);
     }
 
     .tab.active {
-      color: #e6edf3;
-      border-bottom: 2px solid #2ea043;
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--primary-color);
     }
 
     .tab-content {
