@@ -350,9 +350,9 @@ async function getAllEntities() {
     let page = 1;
 
     while (hasMore) {
-      // Si hay cursor, NO enviamos query (así funciona NerdGraph)
+      // cursor va en results(), no en entitySearch()
       const q = cursor
-        ? `{ actor { entitySearch(cursor: "${cursor}") { results { entities { guid name type domain } nextCursor } } } }`
+        ? `{ actor { entitySearch(query: "${query}") { results(cursor: "${cursor}") { entities { guid name type domain } nextCursor } } } }`
         : `{ actor { entitySearch(query: "${query}") { results { entities { guid name type domain } nextCursor } } } }`;
 
       try {
@@ -419,6 +419,7 @@ app.get("/entities", async (req, res) => {
               nrqlConditionsSearch(cursor: ${alertCursor ? `"${alertCursor}"` : null}) {
                 nrqlConditions {
                   name
+                  enabled
                   entity { guid }
                   nrql { query }
                 }
@@ -435,7 +436,7 @@ app.get("/entities", async (req, res) => {
       alertCursor = result.nextCursor;
     } while (alertCursor);
 
-    // Mapear GUIDs alertados
+    // Mapear GUIDs alertados (separado por estado activo/inactivo)
     const alertedEntitiesMap = {};
     allConditions.forEach(cond => {
       const guids = extractGuidsFromNrql(cond.nrql?.query);
@@ -444,10 +445,9 @@ app.get("/entities", async (req, res) => {
       }
 
       guids.forEach(guid => {
-        if (!alertedEntitiesMap[guid]) alertedEntitiesMap[guid] = [];
-        if (!alertedEntitiesMap[guid].includes(cond.name)) {
-          alertedEntitiesMap[guid].push(cond.name);
-        }
+        if (!alertedEntitiesMap[guid]) alertedEntitiesMap[guid] = { active: [], inactive: [] };
+        const list = cond.enabled ? alertedEntitiesMap[guid].active : alertedEntitiesMap[guid].inactive;
+        if (!list.includes(cond.name)) list.push(cond.name);
       });
     });
 
@@ -469,20 +469,21 @@ app.get("/entities", async (req, res) => {
       }
 
       // Buscar alertas por GUID
-      let matchedAlerts = alertedEntitiesMap[ent.guid] || [];
+      const guidMap = alertedEntitiesMap[ent.guid] || { active: [], inactive: [] };
+      let activeAlerts = [...guidMap.active];
+      let inactiveAlerts = [...guidMap.inactive];
 
       // Fallback: Buscar alertas por nombre en el NRQL o en el nombre de la condición
       // Esto ayuda cuando los GUIDs en las alertas son antiguos o no coinciden exactamente
-      if (matchedAlerts.length === 0) {
+      if (activeAlerts.length === 0 && inactiveAlerts.length === 0) {
         const entNameLower = ent.name.toLowerCase();
         allConditions.forEach(cond => {
           const query = (cond.nrql?.query || "").toLowerCase();
           const condName = (cond.name || "").toLowerCase();
 
           if (query.includes(entNameLower) || condName.includes(entNameLower)) {
-            if (!matchedAlerts.includes(cond.name)) {
-              matchedAlerts.push(cond.name);
-            }
+            const list = cond.enabled ? activeAlerts : inactiveAlerts;
+            if (!list.includes(cond.name)) list.push(cond.name);
           }
         });
       }
@@ -491,8 +492,10 @@ app.get("/entities", async (req, res) => {
         name: ent.name,
         type: friendlyType,
         guid: ent.guid,
-        hasAlerts: matchedAlerts.length > 0,
-        alertNames: matchedAlerts
+        hasAlerts: (activeAlerts.length + inactiveAlerts.length) > 0,
+        alertNames: [...activeAlerts, ...inactiveAlerts],
+        activeAlertNames: activeAlerts,
+        inactiveAlertNames: inactiveAlerts
       };
     });
 
@@ -503,5 +506,149 @@ app.get("/entities", async (req, res) => {
   }
 });
 
+
+// Endpoint: lista de entidades por tipo (APM, BROWSER, MOBILE, INFRA_HOST, SYNTH, WORKLOAD)
+app.get("/apm-list", async (req, res) => {
+  try {
+    const DOMAIN_CONFIGS = {
+      APM:        "domain = 'APM'",
+      BROWSER:    "domain = 'BROWSER'",
+      MOBILE:     "domain = 'MOBILE'",
+      INFRA_HOST: "domain = 'INFRA' AND type = 'HOST'",
+      SYNTH:      "domain = 'SYNTH'",
+      WORKLOAD:   "type = 'WORKLOAD'",
+    };
+
+    const allowedKeys = Object.keys(DOMAIN_CONFIGS);
+    const requested = req.query.domains
+      ? req.query.domains.split(',').filter(d => allowedKeys.includes(d))
+      : ["APM", "BROWSER", "MOBILE"];
+    const domainKeys = requested.length > 0 ? requested : ["APM", "BROWSER", "MOBILE"];
+
+    let allEntities = [];
+
+    for (const domainKey of domainKeys) {
+      const searchQuery = DOMAIN_CONFIGS[domainKey];
+      let entities = [];
+      let cursor = null;
+      let page = 1;
+
+      do {
+        const q = cursor
+          ? `{ actor { entitySearch(query: "${searchQuery}") { results(cursor: "${cursor}") { entities { name guid domain type } nextCursor } } } }`
+          : `{ actor { entitySearch(query: "${searchQuery}") { results { entities { name guid domain type } nextCursor } } } }`;
+
+        const data = await graphqlQuery(q);
+        const result = data?.data?.actor?.entitySearch?.results;
+        if (!result) break;
+
+        const pageEntities = (result.entities || []).map(e => ({ ...e, domainKey }));
+        entities = entities.concat(pageEntities);
+        console.log(`[/apm-list] domainKey=${domainKey} pág ${page}: ${result.entities?.length ?? 0} entidades`);
+        cursor = result.nextCursor;
+        page++;
+        if (page > 50) break;
+      } while (cursor);
+
+      allEntities = allEntities.concat(entities);
+    }
+
+    allEntities.sort((a, b) => a.name.localeCompare(b.name));
+    console.log(`[/apm-list] Total: ${allEntities.length} entidades`);
+    res.json(allEntities);
+  } catch (err) {
+    console.error("Error en /apm-list:", err);
+    res.status(500).json({ error: "Error al obtener lista de entidades" });
+  }
+});
+
+// Endpoint: incidentes/issues cerrados de APM en un período dado
+app.post("/apm-incidents", async (req, res) => {
+  try {
+    const { since, until, entityNames, timezone, entityDomains } = req.body;
+    if (!since || !until) return res.status(400).json({ error: "since y until son requeridos" });
+
+    // Validar formato de fecha para prevenir inyección NRQL
+    const dateRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+    if (!dateRegex.test(since) || !dateRegex.test(until)) {
+      return res.status(400).json({ error: "Formato de fecha inválido" });
+    }
+
+    // Lista blanca de zonas horarias
+    const allowedTz = ["America/Santiago", "UTC", "America/New_York", "America/Chicago", "America/Los_Angeles"];
+    const tz = allowedTz.includes(timezone) ? timezone : "America/Santiago";
+
+    // Filtro de tipo de entidad dinámico según dominios seleccionados
+    const DOMAIN_TYPE_MAP = {
+      APM:        "contains(entity.types, 'APPLICATION')",
+      BROWSER:    "contains(entity.types, 'APPLICATION')",
+      MOBILE:     "contains(entity.types, 'APPLICATION')",
+      INFRA_HOST: "contains(entity.types, 'HOST')",
+      SYNTH:      "contains(entity.types, 'MONITOR')",
+      WORKLOAD:   "contains(entity.types, 'WORKLOAD')",
+    };
+    const allowedDomainKeys = Object.keys(DOMAIN_TYPE_MAP);
+    let typeFilter = " AND contains(entity.types, 'APPLICATION')";
+    if (Array.isArray(entityDomains) && entityDomains.length > 0) {
+      const validKeys = entityDomains.filter(d => allowedDomainKeys.includes(d));
+      if (validKeys.length > 0) {
+        const typeConditions = [...new Set(validKeys.map(d => DOMAIN_TYPE_MAP[d]))];
+        typeFilter = typeConditions.length === 1
+          ? ` AND ${typeConditions[0]}`
+          : ` AND (${typeConditions.join(" OR ")})`;
+      }
+    }
+
+    // Filtro de entidades (sanitizar para prevenir inyección NRQL)
+    let entityFilter = "";
+    if (Array.isArray(entityNames) && entityNames.length > 0) {
+      const sanitized = entityNames.map(n => String(n).replace(/'/g, "").replace(/\\/g, ""));
+      const conditions = sanitized.map(n => `contains(entity.names, '${n}')`).join(" OR ");
+      entityFilter = ` AND (${conditions})`;
+    }
+
+    // Dividir el rango en chunks de CHUNK_DAYS días para superar el límite de 5000 por consulta
+    const CHUNK_DAYS = 7;
+    const toDate = str => new Date(str.replace(" ", "T"));
+    const toStr = d => {
+      const pad = n => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+
+    const chunks = [];
+    let chunkStart = toDate(since);
+    const rangeEnd = toDate(until);
+
+    while (chunkStart < rangeEnd) {
+      const chunkEnd = new Date(chunkStart);
+      chunkEnd.setDate(chunkEnd.getDate() + CHUNK_DAYS);
+      if (chunkEnd > rangeEnd) chunkEnd.setTime(rangeEnd.getTime());
+      chunks.push({ since: toStr(chunkStart), until: toStr(chunkEnd) });
+      chunkStart = new Date(chunkEnd);
+    }
+
+    console.log(`📅 /apm-incidents: ${chunks.length} chunks de ${CHUNK_DAYS} días para rango ${since} → ${until}`);
+
+    // Consultar cada chunk en paralelo (máximo 5 concurrentes)
+    const chunkLimit = pLimit(5);
+    const chunkResults = await Promise.all(
+      chunks.map(chunk => chunkLimit(async () => {
+        const nrqlQuery = `SELECT entity.types, entity.names, policyNames, title, priority, activateTime, closeTime, round(durationSeconds/60) AS 'Duracion (min)', incidentCount, muted FROM NrAiIssue WHERE event = 'close'${typeFilter}${entityFilter} SINCE '${chunk.since}' UNTIL '${chunk.until}' WITH TIMEZONE '${tz}' LIMIT MAX`;
+        const escapedNrql = nrqlQuery.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        const q = `{ actor { account(id: ${ACCOUNT_ID}) { nrql(query: "${escapedNrql}") { results } } } }`;
+        const data = await graphqlQuery(q);
+        return data?.data?.actor?.account?.nrql?.results || [];
+      }))
+    );
+
+    const allResults = chunkResults.flat();
+    allResults.sort((a, b) => (b.activateTime ?? 0) - (a.activateTime ?? 0));
+    console.log(`✅ /apm-incidents: ${allResults.length} registros en total.`);
+    res.json(allResults);
+  } catch (err) {
+    console.error("Error en /apm-incidents:", err);
+    res.status(500).json({ error: "Error al obtener incidentes APM" });
+  }
+});
 
 app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));

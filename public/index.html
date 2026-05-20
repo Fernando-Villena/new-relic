@@ -136,6 +136,37 @@
       transform: translateX(3px);
     }
 
+    #apmSelectors label {
+      justify-content: space-between;
+      white-space: normal;
+    }
+    #apmSelectors label .apm-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .domain-toggle {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.82em;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .domain-toggle:has(input:checked) {
+      background: rgba(0, 191, 99, 0.15);
+      border-color: rgba(0, 191, 99, 0.4);
+      color: #00BF63;
+    }
+    .domain-toggle input[type="checkbox"] { display: none; }
+
     .checkbox-group input[type="checkbox"] {
       width: 16px;
       height: 16px;
@@ -244,6 +275,7 @@
         <span class="tab active" onclick="showTab('tab-use')">Policy</span>
         <span class="tab" onclick="showTab('tab-example')">Alertas Configuradas</span>
         <span class="tab" onclick="showTab('tab-entities')">Entidades</span>
+        <span class="tab" onclick="showTab('tab-apm-incidents')">Historial de Alertas</span>
       </div>
 
       <div id="tab-use" class="tab-content active">
@@ -410,8 +442,17 @@
               <label><input type="checkbox" value="Nombre" checked> <span>Nombre</span></label>
               <label><input type="checkbox" value="Tipo" checked> <span>Tipo</span></label>
               <label><input type="checkbox" value="TieneAlertas" checked> <span>Tiene Alertas</span></label>
+              <label><input type="checkbox" value="CantidadAlertas" checked> <span>Cantidad de Alertas</span></label>
               <label><input type="checkbox" value="AlertasVinculadas" checked> <span>Alertas Vinculadas</span></label>
               <label><input type="checkbox" value="GUID" checked> <span>GUID</span></label>
+            </div>
+            <div style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+              <p style="font-size: 0.82em; color: var(--text-secondary); margin: 0 0 10px 0; font-weight: 500; letter-spacing: 0.3px;">Estado de alertas a incluir:</p>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label class="checkbox-group label" style="display:flex;align-items:center;gap:10px;font-size:0.88em;color:var(--text-secondary);padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all 0.2s;"><input type="radio" name="alertStatus" value="all" checked style="accent-color:#00BF63;cursor:pointer;"> Todas (activas + desactivadas)</label>
+                <label class="checkbox-group label" style="display:flex;align-items:center;gap:10px;font-size:0.88em;color:var(--text-secondary);padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all 0.2s;"><input type="radio" name="alertStatus" value="active" style="accent-color:#00BF63;cursor:pointer;"> Solo activas</label>
+                <label class="checkbox-group label" style="display:flex;align-items:center;gap:10px;font-size:0.88em;color:var(--text-secondary);padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all 0.2s;"><input type="radio" name="alertStatus" value="inactive" style="accent-color:#00BF63;cursor:pointer;"> Solo desactivadas</label>
+              </div>
             </div>
           </div>
         </div>
@@ -430,7 +471,70 @@
         </div>
       </div>
 
+      <!-- ===== TAB: INCIDENTES APM ===== -->
+      <div id="tab-apm-incidents" class="tab-content">
+        <div class="info-banner">
+          <strong>Historial de Alertas:</strong> Selecciona el tipo y las entidades a consultar, luego el período de tiempo para exportar las alertas cerradas detectadas por New Relic.
+        </div>
 
+        <div class="entity-config-container" style="grid-template-columns: 1fr;">
+          <div class="config-section">
+            <div class="section-header">
+              <h3>Entidades</h3>
+              <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+                <a href="#" class="control-pill" onclick="loadApmList(); return false;">Cargar lista</a>
+                <a href="#" class="control-pill" onclick="toggleChecks('apmSelectors', true); return false;">Todos</a>
+                <a href="#" class="control-pill" onclick="toggleChecks('apmSelectors', false); return false;">Ninguno</a>
+              </div>
+            </div>
+            <!-- Selector de tipo de entidad -->
+            <div style="margin-bottom:14px;">
+              <div style="font-size:0.82em; color:var(--text-secondary); font-weight:500; margin-bottom:8px;">Tipo de entidad</div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;" id="domainToggles">
+                <label class="domain-toggle"><input type="checkbox" value="APM" checked> APM</label>
+                <label class="domain-toggle"><input type="checkbox" value="BROWSER" checked> Browser</label>
+                <label class="domain-toggle"><input type="checkbox" value="MOBILE" checked> Mobile</label>
+                <label class="domain-toggle"><input type="checkbox" value="INFRA_HOST"> Host</label>
+                <label class="domain-toggle"><input type="checkbox" value="SYNTH"> Synthetics</label>
+                <label class="domain-toggle"><input type="checkbox" value="WORKLOAD"> Workload</label>
+              </div>
+            </div>
+            <!-- Período: fila con Desde y Hasta -->
+            <div style="display:flex; gap:16px; margin-bottom:16px;">
+              <div style="flex:1;">
+                <label style="font-size:0.82em; color:var(--text-secondary); display:block; margin-bottom:6px; font-weight:500;">Desde</label>
+                <input type="datetime-local" id="incidentSince"
+                  style="width:100%; padding:8px 10px; background:transparent; border:1px solid var(--border-color); border-radius:6px; color:var(--text-primary); font-size:0.85em; box-sizing:border-box;" />
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:0.82em; color:var(--text-secondary); display:block; margin-bottom:6px; font-weight:500;">Hasta</label>
+                <input type="datetime-local" id="incidentUntil"
+                  style="width:100%; padding:8px 10px; background:transparent; border:1px solid var(--border-color); border-radius:6px; color:var(--text-primary); font-size:0.85em; box-sizing:border-box;" />
+              </div>
+            </div>
+            <input type="text" id="apmSearch" placeholder="Buscar entidad..."
+              style="width:100%; padding:8px 12px; background:transparent; border:1px solid var(--border-color); border-radius:6px; color:var(--text-primary); font-size:0.88em; margin-bottom:10px; box-sizing:border-box; outline:none;"
+              oninput="filterApmList(this.value)" />
+            <div id="apmLoadMsg" style="font-size:0.82em; color:var(--text-secondary); font-style:italic; padding:4px 0 8px;">
+              Selecciona los tipos y haz clic en &ldquo;Cargar lista&rdquo;.
+            </div>
+            <div class="checkbox-group" id="apmSelectors" style="max-height:280px; overflow-y:auto; padding-right:6px;"></div>
+          </div>
+        </div>
+
+        <div class="status-container" style="margin-top: 10px;">
+          <button id="exportIncidentsBtn" class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Generar Reporte Excel
+          </button>
+          <div id="statusIncidents"></div>
+        </div>
+      </div>
 
 
     </div>
@@ -648,12 +752,18 @@
         }
 
         // 3. Mapear solo los campos seleccionados
+        const alertStatus = document.querySelector('input[name="alertStatus"]:checked').value;
         const rows = filteredEntities.map(e => {
           const row = {};
+          const alertNamesFiltered =
+            alertStatus === 'active'   ? (e.activeAlertNames || []) :
+            alertStatus === 'inactive' ? (e.inactiveAlertNames || []) :
+            (e.alertNames || []);
           if (selectedFields.includes("Nombre")) row["Nombre"] = e.name;
           if (selectedFields.includes("Tipo")) row["Tipo"] = e.type;
-          if (selectedFields.includes("TieneAlertas")) row["Tiene Alertas"] = e.hasAlerts ? "Sí" : "No";
-          if (selectedFields.includes("AlertasVinculadas")) row["Alertas Vinculadas"] = e.alertNames.join(", ");
+          if (selectedFields.includes("TieneAlertas")) row["Tiene Alertas"] = alertNamesFiltered.length > 0 ? "Sí" : "No";
+          if (selectedFields.includes("CantidadAlertas")) row["Cantidad de Alertas"] = alertNamesFiltered.length;
+          if (selectedFields.includes("AlertasVinculadas")) row["Alertas Vinculadas"] = alertNamesFiltered.join(", ");
           if (selectedFields.includes("GUID")) row["GUID"] = e.guid;
           return row;
         });
@@ -667,6 +777,144 @@
       } catch (err) {
         console.error(err);
         setStatus(statusEntities, "❌ Error al exportar entidades", "error");
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // ======================================================
+    // INCIDENTES APM
+    // ======================================================
+
+    // Pre-inicializar fechas: primer día del mes actual → hoy
+    (function initIncidentDates() {
+      const now = new Date();
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const pad = n => String(n).padStart(2, '0');
+      const toFmt = (d, endOfDay) => {
+        const hh = endOfDay ? '23' : '00';
+        const mm = endOfDay ? '59' : '00';
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${hh}:${mm}`;
+      };
+      document.getElementById('incidentSince').value = toFmt(first, false);
+      document.getElementById('incidentUntil').value = toFmt(now, true);
+    })();
+
+    let _apmEntityList = [];
+
+    async function loadApmList() {
+      const msg = document.getElementById('apmLoadMsg');
+      const container = document.getElementById('apmSelectors');
+      const selectedDomains = Array.from(document.querySelectorAll('#domainToggles input:checked')).map(i => i.value);
+      if (selectedDomains.length === 0) {
+        msg.textContent = '⚠️ Selecciona al menos un tipo de entidad.';
+        return;
+      }
+      msg.textContent = 'Cargando...';
+      container.innerHTML = '';
+      try {
+        const resp = await fetch(`${BASE_URL}/apm-list?domains=${selectedDomains.join(',')}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const list = await resp.json();
+        _apmEntityList = list;
+        const byKey = list.reduce((acc, e) => { acc[e.domainKey] = (acc[e.domainKey] || 0) + 1; return acc; }, {});
+        const summary = Object.entries(byKey).map(([d, n]) => `${n} ${d}`).join(', ');
+        msg.textContent = `${list.length} entidades encontradas (${summary}).`;
+        _renderApmList(list);
+      } catch (err) {
+        msg.textContent = '❌ Error al cargar la lista de entidades.';
+        console.error(err);
+      }
+    }
+
+    function _renderApmList(list) {
+      const container = document.getElementById('apmSelectors');
+      const domainColor = {
+        APM: '#00BF63', BROWSER: '#00c0ff', MOBILE: '#f0a500',
+        INFRA_HOST: '#ff6b6b', SYNTH: '#a78bfa', WORKLOAD: '#f97316'
+      };
+      const domainLabel = {
+        APM: 'APM', BROWSER: 'Browser', MOBILE: 'Mobile',
+        INFRA_HOST: 'Host', SYNTH: 'Synth', WORKLOAD: 'Workload'
+      };
+      container.innerHTML = list.map(e => {
+        const safe = e.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const attr = e.name.replace(/"/g, '&quot;');
+        const color = domainColor[e.domainKey] || '#aaa';
+        const label = domainLabel[e.domainKey] || e.domainKey || e.domain || '';
+        const badge = `<span style="font-size:0.7em;padding:1px 5px;border-radius:3px;background:${color}22;color:${color};border:1px solid ${color}44;flex-shrink:0;">${label}</span>`;
+        return `<label><input type="checkbox" value="${attr}" checked><span class="apm-name">${safe}</span>${badge}</label>`;
+      }).join('');
+    }
+
+    function filterApmList(query) {
+      const filtered = _apmEntityList.filter(e => e.name.toLowerCase().includes(query.toLowerCase()));
+      _renderApmList(filtered);
+    }
+
+    function _epochToStr(ms) {
+      if (!ms) return '';
+      return new Date(Number(ms)).toLocaleString('es-CL', { timeZone: 'America/Santiago' });
+    }
+
+    document.getElementById('exportIncidentsBtn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('statusIncidents');
+      const sinceRaw = document.getElementById('incidentSince').value;
+      const untilRaw = document.getElementById('incidentUntil').value;
+      const timezone = 'America/Santiago';
+
+      if (!sinceRaw || !untilRaw) {
+        setStatus(statusEl, '⚠️ Debes seleccionar el período de tiempo', 'warning');
+        return;
+      }
+
+      // Convertir "YYYY-MM-DDTHH:mm" → "YYYY-MM-DD HH:MM:SS" para NRQL
+      const since = sinceRaw.replace('T', ' ') + ':00';
+      const until = untilRaw.replace('T', ' ') + ':00';
+
+      const selectedApm = Array.from(document.querySelectorAll('#apmSelectors input:checked')).map(i => i.value);
+      const selectedDomains = Array.from(document.querySelectorAll('#domainToggles input:checked')).map(i => i.value);
+      if (_apmEntityList.length > 0 && selectedApm.length === 0) {
+        setStatus(statusEl, '⚠️ Debes seleccionar al menos una entidad', 'warning');
+        return;
+      }
+      // Si la lista no fue cargada, se envía vacío → el backend no filtra por entidad
+      const entityNames = _apmEntityList.length > 0 ? selectedApm : [];
+
+      showLoading();
+      try {
+        const data = await fetchAlerts('apm-incidents', { since, until, entityNames, timezone, entityDomains: selectedDomains });
+
+        if (!data || data.length === 0) {
+          setStatus(statusEl, '⚠️ No se encontraron alertas en el período seleccionado', 'warning');
+          return;
+        }
+
+        const arr = d => Array.isArray(d) ? d.join(', ') : (d || '');
+
+        const rows = data.map(r => ({
+          'Entidades':       arr(r['entity.names']),
+          'Tipos':           arr(r['entity.types']),
+          'Políticas':       arr(r['policyNames']),
+          'Título':          r['title']           || '',
+          'Prioridad':       r['priority']        || '',
+          'Inicio':          _epochToStr(r['activateTime']),
+          'Cierre':          _epochToStr(r['closeTime']),
+          'Duración (min)':  r["Duracion (min)"]  ?? '',
+          'N° Incidentes':   r['incidentCount']   ?? '',
+          'Silenciado':      r['muted'] === 'fullyMuted' ? 'Sí' : 'No'
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, 'Alertas_APM');
+        const filename = `apm_alertas_${sinceRaw.slice(0, 10)}_al_${untilRaw.slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, filename);
+
+        setStatus(statusEl, `✅ Exportadas ${rows.length} alertas a ${filename}`, 'success');
+      } catch (err) {
+        console.error(err);
+        setStatus(statusEl, '❌ Error al obtener historial de alertas', 'error');
       } finally {
         hideLoading();
       }
