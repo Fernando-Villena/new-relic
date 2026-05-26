@@ -452,6 +452,7 @@
                 <label class="checkbox-group label" style="display:flex;align-items:center;gap:10px;font-size:0.88em;color:var(--text-secondary);padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all 0.2s;"><input type="radio" name="alertStatus" value="all" checked style="accent-color:#00BF63;cursor:pointer;"> Todas (activas + desactivadas)</label>
                 <label class="checkbox-group label" style="display:flex;align-items:center;gap:10px;font-size:0.88em;color:var(--text-secondary);padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all 0.2s;"><input type="radio" name="alertStatus" value="active" style="accent-color:#00BF63;cursor:pointer;"> Solo activas</label>
                 <label class="checkbox-group label" style="display:flex;align-items:center;gap:10px;font-size:0.88em;color:var(--text-secondary);padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all 0.2s;"><input type="radio" name="alertStatus" value="inactive" style="accent-color:#00BF63;cursor:pointer;"> Solo desactivadas</label>
+                <label class="checkbox-group label" style="display:flex;align-items:center;gap:10px;font-size:0.88em;color:var(--text-secondary);padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all 0.2s;"><input type="radio" name="alertStatus" value="zero" style="accent-color:#00BF63;cursor:pointer;"> Sin alertas (0)</label>
               </div>
             </div>
           </div>
@@ -753,11 +754,27 @@
 
         // 3. Mapear solo los campos seleccionados
         const alertStatus = document.querySelector('input[name="alertStatus"]:checked').value;
-        const rows = filteredEntities.map(e => {
+
+        // Filtrar entidades según el estado de alertas seleccionado
+        const entitiesToExport = filteredEntities.filter(e => {
+          if (alertStatus === 'all')      return true;
+          if (alertStatus === 'active')   return (e.activeAlertNames   || []).length > 0;
+          if (alertStatus === 'inactive') return (e.inactiveAlertNames || []).length > 0;
+          if (alertStatus === 'zero')     return (e.alertNames         || []).length === 0;
+          return true;
+        });
+
+        if (entitiesToExport.length === 0) {
+          setStatus(statusEntities, "⚠️ No hay entidades con alertas en el estado seleccionado", "warning");
+          return;
+        }
+
+        const rows = entitiesToExport.map(e => {
           const row = {};
           const alertNamesFiltered =
-            alertStatus === 'active'   ? (e.activeAlertNames || []) :
+            alertStatus === 'active'   ? (e.activeAlertNames   || []) :
             alertStatus === 'inactive' ? (e.inactiveAlertNames || []) :
+            alertStatus === 'zero'     ? [] :
             (e.alertNames || []);
           if (selectedFields.includes("Nombre")) row["Nombre"] = e.name;
           if (selectedFields.includes("Tipo")) row["Tipo"] = e.type;
@@ -773,7 +790,7 @@
         XLSX.utils.book_append_sheet(workbook, worksheet, "Entidades_Filtradas");
         XLSX.writeFile(workbook, "entities_custom_report.xlsx");
 
-        setStatus(statusEntities, `✅ Exportadas ${filteredEntities.length} entidades a entities_custom_report.xlsx`, "success");
+        setStatus(statusEntities, `✅ Exportadas ${entitiesToExport.length} entidades a entities_custom_report.xlsx`, "success");
       } catch (err) {
         console.error(err);
         setStatus(statusEntities, "❌ Error al exportar entidades", "error");
